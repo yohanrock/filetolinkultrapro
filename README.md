@@ -20,16 +20,16 @@ We are here to help you!
 
   <h1 align="center"></h1>
 <p align="center"> 
-  <img src="https://envs.sh/_pM.jpg" alt="Cover Image" width="650">
+  <img src="https://i.ibb.co/5WZMJQnm/photo-2025-08-01-15-12-45-7533635368923430916.jpg" alt="ROCKSTAR FIL 2 LINK BOT" width="650">
   </a>
  <p align="center">
     A Telegram bot to turn all media and documents files to instant direct download and stream link .
     <br />
    </strong></a>
     <br />
-    <a href="https://t.me/AV_SUPPORT_GROUP">Report a Bug</a>
+    <a href="https://t.me/infinitymoviesgroup">Report a Bug</a>
     |
-    <a href="https://t.me/AV_SUPPORT_GROUP">Request Feature</a>
+    <a href="https://t.me/infinitymoviesgroup">Request Feature</a>
   </p>
 <hr>
 
