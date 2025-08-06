@@ -71,7 +71,7 @@ VERIFY_EXPIRE = int(environ.get('VERIFY_EXPIRE', 60))  # Time (in hours) after w
 
 # ⚙️ Worker Configuration
 WORKERS = int(getenv('WORKERS', '4'))  # Number of async workers
-MULTI_CLIENT = False  # Enable multi-client handling (if needed)
+MULTI_CLIENT = True  # Enable multi-client handling (if needed)
 
 # 🔧 App/Heroku Configuration
 name = str(environ.get('name', 'avbotz'))  # Project name
