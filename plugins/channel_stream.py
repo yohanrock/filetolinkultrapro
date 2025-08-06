@@ -31,7 +31,7 @@ async def channel_receive_handler(bot: Client, broadcast: Message):
         file = broadcast.document or broadcast.video
         file_name = file.file_name if file else "Unknown File"
         msg = await broadcast.forward(chat_id=BIN_CHANNEL)
-        raw_stream = f"{URL}watch/{msg.id}/avbotz.mkv?hash={get_hash(msg)}"
+        raw_stream = f"{URL}watch/{msg.id}/infinity.mkv?hash={get_hash(msg)}"
         raw_download = f"{URL}{msg.id}?hash={get_hash(msg)}"
         raw_file_link = f"https://t.me/{BOT_USERNAME}?start=file_{msg.id}"
         if IS_SHORTLINK:
