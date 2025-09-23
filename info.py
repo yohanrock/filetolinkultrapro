@@ -15,7 +15,7 @@ BIN_CHANNEL = int(environ.get("BIN_CHANNEL", '-1002823015135'))  # File storage 
 LOG_CHANNEL = int(environ.get("LOG_CHANNEL", '-1002823015135'))  # General log channel
 PREMIUM_LOGS = int(environ.get("PREMIUM_LOGS", '-1002823015135'))  # Premium user actions log
 VERIFIED_LOG = int(environ.get('VERIFIED_LOG', '-1002823015135'))  # Verified user actions log
-SUPPORT_GROUP = int(environ.get("SUPPORT_GROUP", "-1001855536535"))
+SUPPORT_GROUP = int(environ.get("SUPPORT_GROUP", "-1002744358471"))
 
 # add admin IDs 11111 2222 3333 and add auth channel IDs -100XXX -100XXX -100XXX
 ADMINS = list(map(int, environ.get('ADMINS', '865764383').split()))  # List of admin user IDs
@@ -27,7 +27,7 @@ BOT_USERNAME = environ.get("BOT_USERNAME", 'Leech4GRobot')  # Bot's username
 
 # 🔗 Channel & Support Links
 CHANNEL = environ.get('CHANNEL', 'https://t.me/Infinity_movies_updates')  # Updates channel
-SUPPORT = environ.get('SUPPORT', 'https://t.me/+GWjY9xCgbBliZTFl')  # Support group
+SUPPORT = environ.get('SUPPORT', 'https://t.me/+7VQB0YoYAhowOTA9')  # Support group
 HOW_TO_VERIFY = environ.get('HOW_TO_VERIFY', 'https://t.me/')  # Verification guide link
 HOW_TO_OPEN = environ.get('HOW_TO_OPEN', 'https://t.me/')  # File access guide link
 
