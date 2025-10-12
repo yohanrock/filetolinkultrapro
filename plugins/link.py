@@ -1,10 +1,10 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from database.auth_groups import is_authorized_chat, add_authorized_chat, remove_authorized_chat, get_authorized_chats  # New DB module
+from database.auth_groups import is_authorized_chat, add_authorized_chat, remove_authorized_chat, get_authorized_chats
 from info import BIN_CHANNEL, LOG_CHANNEL, ADMINS, IS_SHORTLINK, BOT_USERNAME
-from utils import get_shortlink  # For shortlinks if enabled
-from ..avbot import av_verification  # Verification check (relative import from root)
-from database.users_db import db  # For premium/ban checks
+from utils import get_shortlink
+from avbot import av_verification
+from database.users_db import db
 import logging
 from datetime import datetime
 
@@ -17,7 +17,7 @@ async def generate_link(client: Client, file_message: Message) -> str:
         forwarded = await client.forward_messages(BIN_CHANNEL, file_message.chat.id, file_message.id)
         
         # Generate base link
-        hash_str = forwarded.id  # Simplified; use get_hash if available from web/utils/file_properties.py
+        hash_str = forwarded.id  # Simplified; use get_hash if available
         base_link = f"https://t.me/{BOT_USERNAME}/{forwarded.id}?hash={hash_str}"
         
         # Shorten if enabled
@@ -68,9 +68,9 @@ async def link_handler(client: Client, message: Message):
         await message.reply("❌ Reply to a valid media type (document/video/audio).")
         return
     
-    # Size limit (Telegram max 2GB)
-    if replied_msg.document and replied_msg.document.file_size > 2 * 1024 * 1024 * 1024:
-        await message.reply("❌ File too large (>2GB).")
+    # Size limit (4GB)
+    if replied_msg.document and replied_msg.document.file_size > 4 * 1024 * 1024 * 1024:
+        await message.reply("❌ File too large (>4GB).")
         return
     
     await message.reply("🔄 Generating link...")
