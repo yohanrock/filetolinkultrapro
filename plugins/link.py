@@ -3,7 +3,7 @@ from pyrogram.types import Message
 from database.auth_groups import is_authorized_chat, add_authorized_chat, remove_authorized_chat, get_authorized_chats  # New DB module
 from info import BIN_CHANNEL, LOG_CHANNEL, ADMINS, IS_SHORTLINK, BOT_USERNAME
 from utils import get_shortlink  # For shortlinks if enabled
-from avbot import av_verification  # Verification check
+from ..avbot import av_verification  # Verification check (relative import from root)
 from database.users_db import db  # For premium/ban checks
 import logging
 from datetime import datetime
