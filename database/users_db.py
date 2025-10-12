@@ -12,9 +12,9 @@ class Database:
         self.blocked_users = mydb.blocked_users
         self.blocked_channels = mydb.blocked_channels
         self.files = mydb.files
+        self.authorized_chats = mydb.authorized_chats  # Added for /link command
         
     # 🧑‍💻 USER SYSTEM ------------------------------
-
     def new_user(self, id, name):
         return {
             "id": id,
@@ -43,7 +43,6 @@ class Database:
         await self.users.delete_many({'id': int(user_id)})
         
     # ✅ VERIFICATION SYSTEM -----------------------
-
     async def update_verification(self, id, date, time):
         status = {
             'date': str(date),
@@ -77,64 +76,8 @@ class Database:
         return await self.users.count_documents({"verification_status.status": "verified"})
     
     # 🚫 USER BAN SYSTEM ---------------------------
-
-    async def is_user_blocked(self, user_id: int) -> bool:
-        return await self.blocked_users.find_one({"user_id": user_id}) is not None
-
-    async def get_block_data(self, user_id: int):
-        return await self.blocked_users.find_one({"user_id": user_id})
-
-    async def block_user(self, user_id: int, reason: str = "No reason provided."):
-        await self.blocked_users.update_one(
-            {"user_id": user_id},
-            {
-                "$set": {
-                    "user_id": user_id,
-                    "reason": reason,
-                    "blocked_at": datetime.utcnow()
-                }
-            },
-            upsert=True
-        )
-
-    async def unblock_user(self, user_id: int):
-        await self.blocked_users.delete_one({"user_id": user_id})
-
-    async def get_all_blocked_users(self):
-        return self.blocked_users.find({})
-
-    async def total_blocked_count(self):
-        return await self.blocked_users.count_documents({})
-
-    # 📣 CHANNEL BAN SYSTEM ------------------------
-
-    async def is_channel_blocked(self, channel_id: int) -> bool:
-        return await self.blocked_channels.find_one({"channel_id": channel_id}) is not None
-
-    async def block_channel(self, channel_id: int, reason: str = "No reason provided."):
-        await self.blocked_channels.update_one(
-            {"channel_id": channel_id},
-            {
-                "$set": {
-                    "channel_id": channel_id,
-                    "reason": reason,
-                    "blocked_at": datetime.utcnow()
-                }
-            },
-            upsert=True
-        )
-
-    async def unblock_channel(self, channel_id: int):
-        await self.blocked_channels.delete_one({"channel_id": channel_id})
-
-    async def get_all_blocked_channels(self):
-        return self.blocked_channels.find({})
-
-    async def get_channel_block_data(self, channel_id: int):
-        return await self.blocked_channels.find_one({"channel_id": channel_id})
-
-    async def total_blocked_channels_count(self):
-        return await self.blocked_channels.count_documents({})
+    async def is_user_blocked(self, user_id):
+        return bool(await self.blocked_users.find_one({"id": int(user_id)}))
 
     async def get_user(self, user_id):
         user_data = await self.users.find_one({"id": user_id})
@@ -165,7 +108,7 @@ class Database:
             
     async def all_premium_users_count(self):
         count = await self.users.count_documents({
-        "expiry_time": {"$gt": datetime.now()}
+            "expiry_time": {"$gt": datetime.now()}
         })
         return count
 
@@ -176,7 +119,6 @@ class Database:
             expired_users.append(user)
         return expired_users
 
-# Inside your DB manager class
     async def get_expiring_soon(self, label, delta):
         reminder_key = f"reminder_{label}_sent"
         now = datetime.utcnow()
