@@ -3,8 +3,9 @@ from pyrogram.types import Message
 from database.auth_groups import is_authorized_chat, add_authorized_chat, remove_authorized_chat, get_authorized_chats
 from info import BIN_CHANNEL, LOG_CHANNEL, ADMINS, IS_SHORTLINK, BOT_USERNAME
 from utils import get_shortlink
-from avbot import av_verification
+from .avbot import av_verification, is_user_joined
 from database.users_db import db
+from web.utils.file_properties import get_hash
 import logging
 from datetime import datetime
 
@@ -16,8 +17,8 @@ async def generate_link(client: Client, file_message: Message) -> str:
         # Forward to BIN_CHANNEL
         forwarded = await client.forward_messages(BIN_CHANNEL, file_message.chat.id, file_message.id)
         
-        # Generate base link
-        hash_str = forwarded.id  # Simplified; use get_hash if available
+        # Generate base link with hash
+        hash_str = get_hash(forwarded)
         base_link = f"https://t.me/{BOT_USERNAME}/{forwarded.id}?hash={hash_str}"
         
         # Shorten if enabled
@@ -44,7 +45,7 @@ async def link_handler(client: Client, message: Message):
         await message.reply("❌ This group is not authorized. Contact admin to authorize.")
         return
     
-    # FSUB check (from avbot.py)
+    # FSUB check
     if not await is_user_joined(client, message):
         return
     
@@ -68,7 +69,7 @@ async def link_handler(client: Client, message: Message):
         await message.reply("❌ Reply to a valid media type (document/video/audio).")
         return
     
-    # Size limit (4GB)
+    # Size limit (4GB for your setup)
     if replied_msg.document and replied_msg.document.file_size > 4 * 1024 * 1024 * 1024:
         await message.reply("❌ File too large (>4GB).")
         return
