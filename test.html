@@ -197,73 +197,65 @@
       align-items: center;
       justify-content: center;
       gap: 32px;
-      z-index: 28;
-      pointer-events: auto;
+      z-index: 100 !important;
+      pointer-events: auto !important;
       opacity: 1;
       visibility: visible;
       transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
     }
 
-    /* Auto-hide: hide player bar, top, and center controls when idle/hidden */
+    /* Auto-hide: hide player bar, top, and center controls when idle while playing */
+    .art-video-player.gd-idle-hidden .art-bottom,
+    .art-video-player.gd-idle-hidden .art-top,
+    .art-video-player.gd-idle-hidden .art-mask-bottom,
+    .art-video-player.gd-idle-hidden .gd-center-controls,
+    .art-video-player.gd-idle-hidden .gd-timeline-preview,
+    .art-video-player.gd-idle-hidden .art-progress,
     .art-video-player.gd-force-hide .art-bottom,
     .art-video-player.gd-force-hide .art-top,
     .art-video-player.gd-force-hide .art-mask-bottom,
     .art-video-player.gd-force-hide .gd-center-controls,
     .art-video-player.gd-force-hide .gd-timeline-preview,
-    .art-video-player.gd-force-hide .art-progress,
-    .art-video-player.gd-idle-hidden .art-bottom,
-    .art-video-player.gd-idle-hidden .art-top,
-    .art-video-player.gd-idle-hidden .gd-center-controls,
-    .art-video-player.art-hide-cursor .art-bottom,
-    .art-video-player.art-hide-cursor .art-top,
-    .art-video-player.art-hide-cursor .gd-center-controls,
-    .art-video-player.art-state-play:not(.art-control-show) .art-bottom,
-    .art-video-player.art-state-play:not(.art-control-show) .art-top,
-    .art-video-player.art-state-play:not(.art-control-show) .gd-center-controls {
+    .art-video-player.gd-force-hide .art-progress {
       opacity: 0 !important;
       visibility: hidden !important;
       pointer-events: none !important;
       transform: translateY(14px) !important;
-      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease !important;
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease !important;
     }
 
-    .art-video-player.gd-force-hide .gd-center-controls,
     .art-video-player.gd-idle-hidden .gd-center-controls,
-    .art-video-player.art-hide-cursor .gd-center-controls,
-    .art-video-player.art-state-play:not(.art-control-show) .gd-center-controls {
-      transform: translate(-50%, -50%) scale(0.9) !important;
+    .art-video-player.gd-force-hide .gd-center-controls {
+      transform: translate(-50%, -50%) scale(0.88) !important;
     }
 
-    /* When controls are active or player is paused: show bottom bar, top, and center buttons */
-    .art-video-player.art-control-show:not(.gd-force-hide):not(.gd-idle-hidden) .art-bottom,
-    .art-video-player.art-control-show:not(.gd-force-hide):not(.gd-idle-hidden) .art-top,
+    /* Hide cursor completely when idle/hidden while playing */
+    .art-video-player.gd-idle-hidden,
+    .art-video-player.gd-idle-hidden *,
+    .art-video-player.gd-force-hide,
+    .art-video-player.gd-force-hide *,
+    .art-video-player.art-hide-cursor,
+    .art-video-player.art-hide-cursor * {
+      cursor: none !important;
+    }
+
+    /* Visible state when moving or paused */
+    .art-video-player:not(.gd-idle-hidden):not(.gd-force-hide) .art-bottom,
+    .art-video-player:not(.gd-idle-hidden):not(.gd-force-hide) .art-top,
     .art-video-player.art-state-pause .art-bottom,
     .art-video-player.art-state-pause .art-top {
       opacity: 1 !important;
       visibility: visible !important;
       pointer-events: auto !important;
       transform: translateY(0) !important;
-      transition: opacity 0.25s ease, transform 0.25s ease !important;
     }
 
-    .art-video-player.art-control-show:not(.gd-force-hide):not(.gd-idle-hidden) .gd-center-controls,
-    .art-video-player.art-state-pause .gd-center-controls,
-    .art-video-player:not(.art-state-play) .gd-center-controls {
+    .art-video-player:not(.gd-idle-hidden):not(.gd-force-hide) .gd-center-controls,
+    .art-video-player.art-state-pause .gd-center-controls {
       opacity: 1 !important;
       visibility: visible !important;
       pointer-events: auto !important;
       transform: translate(-50%, -50%) scale(1) !important;
-      transition: opacity 0.25s ease, transform 0.25s ease !important;
-    }
-
-    /* Hide cursor completely when idle/hidden */
-    .art-video-player.gd-force-hide,
-    .art-video-player.gd-force-hide *,
-    .art-video-player.gd-idle-hidden,
-    .art-video-player.gd-idle-hidden *,
-    .art-video-player.art-hide-cursor,
-    .art-video-player.art-hide-cursor * {
-      cursor: none !important;
     }
 
     /* Scrubber Video Preview Tooltip */
@@ -313,10 +305,10 @@
     }
 
     .center-btn {
-      pointer-events: auto;
+      pointer-events: auto !important;
       border: none;
       outline: none;
-      cursor: pointer;
+      cursor: pointer !important;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -324,6 +316,13 @@
       position: relative;
       transition: transform 0.15s ease, background 0.15s ease;
       user-select: none;
+      -webkit-user-select: none;
+      z-index: 101 !important;
+    }
+    .center-btn svg,
+    .center-btn path,
+    .center-btn span {
+      pointer-events: none !important;
     }
     .center-btn:hover {
       transform: scale(1.1);
@@ -900,7 +899,7 @@
   <div class="d-flex flex-column min-vh-100">
 
     <!-- Header -->
-    <header class="py-2 shadow" style="background-color: transparent !important; color: #ffffff !important;">
+    <header class="py-2 shadow" style="background-color: #12151c !important; color: #ffffff !important;">
       <div class="d-flex justify-content-between align-items-center container">
         <h1 class="h4 mb-0 fw-bold d-flex align-items-center">
           <img src="https://files.catbox.moe/4cxrp6.png" alt="Logo" width="30" height="30" class="rounded-circle me-2" style="object-fit: cover;">
@@ -1029,16 +1028,16 @@
       </div>
 
       <!-- Create Link & Share Buttons -->
-      <a id="demo4" onclick="showLinkModal('https://t.me/example')" class="btn btn-warning w-100 mb-2" style="border: none; background-color: #ffc107; color: #000000;">
+      <a id="demo4" onclick="showLinkModal('https://t.me/example')" class="btn btn-warning w-100 mb-2" style="border: none; background-color: #ff2a34; color: #ffffff;">
         <i class="fa-brands fa-telegram me-1"></i> Create Like This Link
       </a>
 
-      <a onclick="shareButton()" class="btn btn-danger w-100 mb-3" style="border: none; background-color: #dc3545; color: #ffffff;">
+      <a onclick="shareButton()" class="btn btn-danger w-100 mb-3" style="border: none; background-color: #2563eb; color: #ffffff;">
         <i class="fa fa-share-nodes me-1"></i> Share Now
       </a>
 
       <!-- File Information Card -->
-      <div class="card bg-dark text-light border-secondary mb-3" style="background-color: #181a20 !important; color: #ffffff !important;">
+      <div class="card bg-dark text-light border-secondary mb-3" style="background-color: #161a23 !important; color: #ffffff !important;">
         <div class="card-header border-secondary d-flex justify-content-between align-items-center">
           <h5 class="mb-0 fs-6 fw-bold"><i class="fa-solid fa-circle-info me-2"></i> File Information</h5>
           <span class="badge bg-secondary">Secure Stream</span>
@@ -1049,18 +1048,18 @@
               <p class="mb-1"><strong>File Name: </strong><span class="text-info">Big_Buck_Bunny_1080p_MultiAudio.mkv</span></p>
             </div>
             <div class="col-md-4">
-              <p class="mb-1"><strong>Size: </strong>1.05 GB</p>
+              <p class="mb-1"><strong>Size: </strong>158.2 MB</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Disclaimer & Report -->
-      <div class="alert alert-warning mb-4" style="background-color: rgba(255, 193, 7, 0.15); color: #ffc107;">
+      <div class="alert alert-warning mb-4" style="background-color: #1a1e29; color: #f3f4f6;">
         <h6 class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i> Disclaimer</h6>
-        <p class="mb-2 small">This file is protected and streamed securely.</p>
+        <p class="mb-2 small">This stream is provided for testing purposes.</p>
         <div>
-          <a href="#" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener">Report Issue</a>
+          <a href="https://t.me/example" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener">Report Issue</a>
         </div>
       </div>
 
@@ -1069,7 +1068,7 @@
     <!-- Footer -->
     <footer class="text-center py-3 text-muted small border-top border-secondary">
       <div class="container">
-        <span>Powered by <b>Infinity Movies</b> Â· High-Performance In-Browser Streaming</span>
+        <span>Powered by <b>Infinity Movies</b> · High-Performance In-Browser Streaming</span>
       </div>
     </footer>
 
@@ -2187,123 +2186,185 @@
       const centerOverlay = document.createElement('div');
       centerOverlay.className = 'gd-center-controls';
       centerOverlay.innerHTML = `
-        <button class="center-btn seek-circle" title="Rewind 10s (â†)">
+        <button class="center-btn seek-circle seek-rewind" type="button" title="Rewind 10s (←)" aria-label="Rewind 10s">
           ${SVG_ICONS.rewind10}
           <span class="center-btn-text">10</span>
         </button>
-        <button class="center-btn center-clapper" title="Play / Pause (Space)">
+        <button class="center-btn center-clapper" type="button" title="Play / Pause (Space)" aria-label="Play or Pause">
           ${SVG_ICONS.play}
         </button>
-        <button class="center-btn seek-circle" title="Forward 10s (â†’)">
+        <button class="center-btn seek-circle seek-forward" type="button" title="Forward 10s (→)" aria-label="Forward 10s">
           ${SVG_ICONS.forward10}
           <span class="center-btn-text">10</span>
         </button>
       `;
       playerEl.appendChild(centerOverlay);
 
-      function togglePlayback() {
-        if (art.playing || (!video.paused && !video.ended)) {
-          art.pause();
-          video.pause();
-        } else {
-          const p = art.play();
-          if (p !== undefined && p.catch) {
-            p.catch(() => {
-              try { video.play(); } catch {}
-            });
-          }
-        }
-        onUserMovement();
-      }
-
-      const [btnRewind, btnClapper, btnForward] = centerOverlay.querySelectorAll('.center-btn');
-      btnRewind.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        art.seek = Math.max(0, video.currentTime - 10);
-        showToast('âª âˆ’10s');
-        onUserMovement();
-      });
-      btnForward.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        art.seek = Math.min(video.duration || Infinity, video.currentTime + 10);
-        showToast('â© +10s');
-        onUserMovement();
-      });
-      btnClapper.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        togglePlayback();
-      });
-
-      // Clicking on video or mask directly toggles play/pause
-      const handleVideoAreaClick = (e) => {
-        if (e.target.closest('.art-bottom, .art-settings, .gd-menu, .help, .seek-circle, .gd-timeline-preview')) return;
-        e.stopPropagation();
-        e.preventDefault();
-        togglePlayback();
-      };
-
-      if (art.template.$video) art.template.$video.addEventListener('click', handleVideoAreaClick);
-      if (art.template.$mask) art.template.$mask.addEventListener('click', handleVideoAreaClick);
-      playerEl.addEventListener('click', handleVideoAreaClick);
+      const btnRewind = centerOverlay.querySelector('.seek-rewind');
+      const btnPlayPause = centerOverlay.querySelector('.center-clapper');
+      const btnForward = centerOverlay.querySelector('.seek-forward');
 
       /* ==========================================================================
          AUTO-HIDE CONTROLS & CURSOR CONTROLLER
-         Even if cursor is on player, idle timer hides everything! Only movement shows bar.
+         Stationary cursor hides everything after 2s while playing. Movement restores.
          ========================================================================== */
       let lastMoveTime = Date.now();
       let idleInterval = null;
       const IDLE_LIMIT = 2000; // 2 seconds
 
-      function onUserMovement() {
+      function showControls() {
         lastMoveTime = Date.now();
-        playerEl.classList.remove('gd-force-hide');
+        playerEl.classList.remove('gd-idle-hidden', 'gd-force-hide', 'art-hide-cursor');
         playerEl.classList.add('art-control-show');
         try { art.controls.show = true; } catch {}
       }
 
-      playerEl.addEventListener('mousemove', onUserMovement);
-      playerEl.addEventListener('pointermove', onUserMovement);
+      function hideControls() {
+        if (video.paused || video.ended || !art.playing) return;
+        if (playerEl.querySelector('.gd-menu') || playerEl.querySelector('.help')) return;
+
+        playerEl.classList.add('gd-idle-hidden');
+        playerEl.classList.remove('art-control-show');
+        try { art.controls.show = false; } catch {}
+      }
+
+      function onUserMovement() {
+        showControls();
+      }
+
+      playerEl.addEventListener('mousemove', onUserMovement, { passive: true });
+      playerEl.addEventListener('pointermove', onUserMovement, { passive: true });
       playerEl.addEventListener('touchstart', onUserMovement, { passive: true });
 
       clearInterval(idleInterval);
       idleInterval = setInterval(() => {
-        if (video.paused) {
-          playerEl.classList.remove('gd-force-hide');
+        if (video.paused || video.ended || !art.playing) {
+          showControls();
           return;
         }
-        if (playerEl.querySelector('.gd-menu')) return;
-
-        const idleMs = Date.now() - lastMoveTime;
-        if (idleMs >= IDLE_LIMIT) {
-          playerEl.classList.add('gd-force-hide');
-          playerEl.classList.remove('art-control-show');
-          try { art.controls.show = false; } catch {}
+        if (Date.now() - lastMoveTime >= IDLE_LIMIT) {
+          hideControls();
         }
-      }, 200);
+      }, 250);
 
       playerEl.addEventListener('mouseleave', () => {
-        if (!video.paused) {
-          playerEl.classList.add('gd-force-hide');
-          playerEl.classList.remove('art-control-show');
+        if (!video.paused && !video.ended && art.playing) {
+          hideControls();
         }
+      });
+
+      function togglePlayback() {
+        try {
+          if (art.playing || (!video.paused && !video.ended)) {
+            art.pause();
+            video.pause();
+          } else {
+            const p = art.play();
+            if (p !== undefined && p && p.catch) {
+              p.catch(() => {
+                try { video.play(); } catch {}
+              });
+            }
+          }
+        } catch (err) {
+          if (video.paused) {
+            try { video.play(); } catch {}
+          } else {
+            try { video.pause(); } catch {}
+          }
+        }
+        showControls();
+      }
+
+      function doRewind() {
+        const cur = (typeof art.currentTime === 'number' && !isNaN(art.currentTime))
+          ? art.currentTime
+          : (video.currentTime || 0);
+        const target = Math.max(0, cur - 10);
+        try { art.currentTime = target; } catch {}
+        try { video.currentTime = target; } catch {}
+        try { art.seek = target; } catch {}
+        showToast('⏪ −10s');
+        showControls();
+      }
+
+      function doForward() {
+        const cur = (typeof art.currentTime === 'number' && !isNaN(art.currentTime))
+          ? art.currentTime
+          : (video.currentTime || 0);
+        const dur = (typeof art.duration === 'number' && !isNaN(art.duration) && art.duration > 0)
+          ? art.duration
+          : (video.duration || Infinity);
+        const target = Math.min(dur, cur + 10);
+        try { art.currentTime = target; } catch {}
+        try { video.currentTime = target; } catch {}
+        try { art.seek = target; } catch {}
+        showToast('⏩ +10s');
+        showControls();
+      }
+
+      btnRewind.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        doRewind();
+      });
+      btnForward.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        doForward();
+      });
+      btnPlayPause.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePlayback();
+      });
+
+      btnRewind.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') {
+          e.preventDefault();
+          e.stopPropagation();
+          doRewind();
+        }
+      });
+      btnForward.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') {
+          e.preventDefault();
+          e.stopPropagation();
+          doForward();
+        }
+      });
+      btnPlayPause.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') {
+          e.preventDefault();
+          e.stopPropagation();
+          togglePlayback();
+        }
+      });
+
+      // Direct single click on video area (excluding controls, menus, center buttons)
+      playerEl.addEventListener('click', (e) => {
+        if (e.target.closest('.art-bottom, .art-top, .art-settings, .gd-menu, .help, .gd-center-controls, .gd-timeline-preview, .art-controls, .center-btn')) {
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        togglePlayback();
       });
 
       const onPlayState = () => {
         playerEl.classList.add('art-state-play');
         playerEl.classList.remove('art-state-pause');
-        btnClapper.innerHTML = SVG_ICONS.pause;
-        onUserMovement();
+        btnPlayPause.innerHTML = SVG_ICONS.pause;
+        btnPlayPause.setAttribute('title', 'Pause (Space)');
+        showControls();
       };
 
       const onPauseState = () => {
         playerEl.classList.remove('art-state-play');
         playerEl.classList.add('art-state-pause');
-        playerEl.classList.remove('gd-force-hide');
-        btnClapper.innerHTML = SVG_ICONS.play;
-        onUserMovement();
+        btnPlayPause.innerHTML = SVG_ICONS.play;
+        btnPlayPause.setAttribute('title', 'Play (Space)');
+        showControls();
       };
 
       art.on('play', onPlayState);
@@ -2346,7 +2407,10 @@
           const rect = progressBar.getBoundingClientRect();
           const playerRect = playerEl.getBoundingClientRect();
           const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-          const targetTime = ratio * (video.duration || 0);
+          const dur = (typeof art.duration === 'number' && !isNaN(art.duration) && art.duration > 0)
+            ? art.duration
+            : (video.duration || 0);
+          const targetTime = ratio * dur;
 
           const halfWidth = 80;
           const cursorX = e.clientX - playerRect.left;
@@ -2387,7 +2451,7 @@
             const auds = mkv.tracks.filter(t => t.type === 2);
             audioItems = auds.map((t, i) => ({
               label: t.name || langName(t.lang) || `Audio ${i + 1}`,
-              sub: [t.name && langName(t.lang), codecLabel(t.codec), chLabel(t.channels)].filter(Boolean).join(' Â· '),
+              sub: [t.name && langName(t.lang), codecLabel(t.codec), chLabel(t.channels)].filter(Boolean).join(' · '),
               tag: t.def ? 'DEFAULT' : '',
               langKey: langName(t.lang) || t.name
             }));
@@ -2395,7 +2459,7 @@
 
             subItems = mkv.tracks.filter(t => t.type === 17).map(t => ({
               label: t.name || langName(t.lang) || `Subtitle ${t.number}`,
-              sub: [t.name && langName(t.lang), t.forced ? 'Forced' : '', subCodecLabel(t.codec)].filter(Boolean).join(' Â· '),
+              sub: [t.name && langName(t.lang), t.forced ? 'Forced' : '', subCodecLabel(t.codec)].filter(Boolean).join(' · '),
               track: t,
               disabled: /PGS|VOBSUB|DVB/i.test(t.codec),
               disabledReason: 'Image subtitles (PGS/VobSub) can only be viewed in external players like VLC or MX Player.'
@@ -2406,7 +2470,7 @@
             const list = await input.getAudioTracks();
             audioItems = list.map((t, i) => ({
               label: t.name || langName(t.languageCode) || `Audio ${i + 1}`,
-              sub: [codecLabel(t.codec), chLabel(t.numberOfChannels)].filter(Boolean).join(' Â· '),
+              sub: [codecLabel(t.codec), chLabel(t.numberOfChannels)].filter(Boolean).join(' · '),
               tag: t.disposition && t.disposition.default ? 'DEFAULT' : ''
             }));
           }
@@ -2684,12 +2748,11 @@
           if (zone && zone === lastZone && now - lastTap < 400) {
             e.stopPropagation();
             streak++;
-            const seekDiff = zone * 10;
-            art.seek = Math.max(0, Math.min(video.duration || Infinity, video.currentTime + seekDiff));
+            if (zone > 0) doForward(); else doRewind();
             if (ripple) ripple.remove();
             ripple = document.createElement('div');
             ripple.className = 'gd-ripple ' + (zone < 0 ? 'l' : 'r');
-            ripple.innerHTML = `<span>${zone < 0 ? 'âª ' : ''}${streak * 10}s${zone > 0 ? ' â©' : ''}</span>`;
+            ripple.innerHTML = `<span>${zone < 0 ? '⏪ ' : ''}${streak * 10}s${zone > 0 ? ' ⏩' : ''}</span>`;
             playerEl.appendChild(ripple);
             const myRip = ripple;
             setTimeout(() => { if (myRip.parentNode) myRip.remove(); }, 650);
@@ -2726,19 +2789,17 @@
           case ' ':
           case 'k':
           case 'K':
-            art.toggle();
+            togglePlayback();
             break;
           case 'ArrowRight':
           case 'l':
           case 'L':
-            art.seek = Math.min(video.duration || Infinity, video.currentTime + (e.shiftKey ? 30 : 10));
-            showToast(`Forward 10s`);
+            doForward();
             break;
           case 'ArrowLeft':
           case 'j':
           case 'J':
-            art.seek = Math.max(0, video.currentTime - (e.shiftKey ? 30 : 10));
-            showToast(`Backward 10s`);
+            doRewind();
             break;
           case 'ArrowUp':
             volBooster.step(1, art, boostBadge);
@@ -2826,16 +2887,16 @@
             <h3><i class="fa-solid fa-keyboard me-2"></i>Keyboard Shortcuts</h3>
             <div class="grid">
               <div><span>Play / Pause</span><kbd>Space / K</kbd></div>
-              <div><span>Seek Back / Forward</span><kbd>â† / â†’</kbd></div>
-              <div><span>30s Fast Seek</span><kbd>Shift + â† â†’</kbd></div>
-              <div><span>Volume Boost (up to 400%)</span><kbd>â†‘ / â†“</kbd></div>
+              <div><span>Seek Back / Forward</span><kbd>← / →</kbd></div>
+              <div><span>30s Fast Seek</span><kbd>Shift + ← →</kbd></div>
+              <div><span>Volume Boost (up to 400%)</span><kbd>↑ / ↓</kbd></div>
               <div><span>Mute Audio</span><kbd>M</kbd></div>
               <div><span>Toggle Fullscreen</span><kbd>F</kbd></div>
               <div><span>Switch Audio Track</span><kbd>A</kbd></div>
               <div><span>Cycle Subtitles</span><kbd>C</kbd></div>
               <div><span>Subtitle Delay -/+</span><kbd>G / H</kbd></div>
               <div><span>Playback Speed</span><kbd>&lt; / &gt;</kbd></div>
-              <div><span>Jump to 0% â€“ 90%</span><kbd>0 â€“ 9</kbd></div>
+              <div><span>Jump to 0% – 90%</span><kbd>0 – 9</kbd></div>
               <div><span>Picture-in-Picture</span><kbd>P</kbd></div>
             </div>
             <div class="text-end mt-3">

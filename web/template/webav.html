@@ -197,73 +197,65 @@
       align-items: center;
       justify-content: center;
       gap: 32px;
-      z-index: 28;
-      pointer-events: auto;
+      z-index: 100 !important;
+      pointer-events: auto !important;
       opacity: 1;
       visibility: visible;
       transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
     }
 
-    /* Auto-hide: hide player bar, top, and center controls when idle/hidden */
+    /* Auto-hide: hide player bar, top, and center controls when idle while playing */
+    .art-video-player.gd-idle-hidden .art-bottom,
+    .art-video-player.gd-idle-hidden .art-top,
+    .art-video-player.gd-idle-hidden .art-mask-bottom,
+    .art-video-player.gd-idle-hidden .gd-center-controls,
+    .art-video-player.gd-idle-hidden .gd-timeline-preview,
+    .art-video-player.gd-idle-hidden .art-progress,
     .art-video-player.gd-force-hide .art-bottom,
     .art-video-player.gd-force-hide .art-top,
     .art-video-player.gd-force-hide .art-mask-bottom,
     .art-video-player.gd-force-hide .gd-center-controls,
     .art-video-player.gd-force-hide .gd-timeline-preview,
-    .art-video-player.gd-force-hide .art-progress,
-    .art-video-player.gd-idle-hidden .art-bottom,
-    .art-video-player.gd-idle-hidden .art-top,
-    .art-video-player.gd-idle-hidden .gd-center-controls,
-    .art-video-player.art-hide-cursor .art-bottom,
-    .art-video-player.art-hide-cursor .art-top,
-    .art-video-player.art-hide-cursor .gd-center-controls,
-    .art-video-player.art-state-play:not(.art-control-show) .art-bottom,
-    .art-video-player.art-state-play:not(.art-control-show) .art-top,
-    .art-video-player.art-state-play:not(.art-control-show) .gd-center-controls {
+    .art-video-player.gd-force-hide .art-progress {
       opacity: 0 !important;
       visibility: hidden !important;
       pointer-events: none !important;
       transform: translateY(14px) !important;
-      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease !important;
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease !important;
     }
 
-    .art-video-player.gd-force-hide .gd-center-controls,
     .art-video-player.gd-idle-hidden .gd-center-controls,
-    .art-video-player.art-hide-cursor .gd-center-controls,
-    .art-video-player.art-state-play:not(.art-control-show) .gd-center-controls {
-      transform: translate(-50%, -50%) scale(0.9) !important;
+    .art-video-player.gd-force-hide .gd-center-controls {
+      transform: translate(-50%, -50%) scale(0.88) !important;
     }
 
-    /* When controls are active or player is paused: show bottom bar, top, and center buttons */
-    .art-video-player.art-control-show:not(.gd-force-hide):not(.gd-idle-hidden) .art-bottom,
-    .art-video-player.art-control-show:not(.gd-force-hide):not(.gd-idle-hidden) .art-top,
+    /* Hide cursor completely when idle/hidden while playing */
+    .art-video-player.gd-idle-hidden,
+    .art-video-player.gd-idle-hidden *,
+    .art-video-player.gd-force-hide,
+    .art-video-player.gd-force-hide *,
+    .art-video-player.art-hide-cursor,
+    .art-video-player.art-hide-cursor * {
+      cursor: none !important;
+    }
+
+    /* Visible state when moving or paused */
+    .art-video-player:not(.gd-idle-hidden):not(.gd-force-hide) .art-bottom,
+    .art-video-player:not(.gd-idle-hidden):not(.gd-force-hide) .art-top,
     .art-video-player.art-state-pause .art-bottom,
     .art-video-player.art-state-pause .art-top {
       opacity: 1 !important;
       visibility: visible !important;
       pointer-events: auto !important;
       transform: translateY(0) !important;
-      transition: opacity 0.25s ease, transform 0.25s ease !important;
     }
 
-    .art-video-player.art-control-show:not(.gd-force-hide):not(.gd-idle-hidden) .gd-center-controls,
-    .art-video-player.art-state-pause .gd-center-controls,
-    .art-video-player:not(.art-state-play) .gd-center-controls {
+    .art-video-player:not(.gd-idle-hidden):not(.gd-force-hide) .gd-center-controls,
+    .art-video-player.art-state-pause .gd-center-controls {
       opacity: 1 !important;
       visibility: visible !important;
       pointer-events: auto !important;
       transform: translate(-50%, -50%) scale(1) !important;
-      transition: opacity 0.25s ease, transform 0.25s ease !important;
-    }
-
-    /* Hide cursor completely when idle/hidden */
-    .art-video-player.gd-force-hide,
-    .art-video-player.gd-force-hide *,
-    .art-video-player.gd-idle-hidden,
-    .art-video-player.gd-idle-hidden *,
-    .art-video-player.art-hide-cursor,
-    .art-video-player.art-hide-cursor * {
-      cursor: none !important;
     }
 
     /* Scrubber Video Preview Tooltip */
@@ -313,10 +305,10 @@
     }
 
     .center-btn {
-      pointer-events: auto;
+      pointer-events: auto !important;
       border: none;
       outline: none;
-      cursor: pointer;
+      cursor: pointer !important;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -324,6 +316,13 @@
       position: relative;
       transition: transform 0.15s ease, background 0.15s ease;
       user-select: none;
+      -webkit-user-select: none;
+      z-index: 101 !important;
+    }
+    .center-btn svg,
+    .center-btn path,
+    .center-btn span {
+      pointer-events: none !important;
     }
     .center-btn:hover {
       transform: scale(1.1);
@@ -2187,123 +2186,185 @@
       const centerOverlay = document.createElement('div');
       centerOverlay.className = 'gd-center-controls';
       centerOverlay.innerHTML = `
-        <button class="center-btn seek-circle" title="Rewind 10s (←)">
+        <button class="center-btn seek-circle seek-rewind" type="button" title="Rewind 10s (←)" aria-label="Rewind 10s">
           ${SVG_ICONS.rewind10}
           <span class="center-btn-text">10</span>
         </button>
-        <button class="center-btn center-clapper" title="Play / Pause (Space)">
+        <button class="center-btn center-clapper" type="button" title="Play / Pause (Space)" aria-label="Play or Pause">
           ${SVG_ICONS.play}
         </button>
-        <button class="center-btn seek-circle" title="Forward 10s (→)">
+        <button class="center-btn seek-circle seek-forward" type="button" title="Forward 10s (→)" aria-label="Forward 10s">
           ${SVG_ICONS.forward10}
           <span class="center-btn-text">10</span>
         </button>
       `;
       playerEl.appendChild(centerOverlay);
 
-      function togglePlayback() {
-        if (art.playing || (!video.paused && !video.ended)) {
-          art.pause();
-          video.pause();
-        } else {
-          const p = art.play();
-          if (p !== undefined && p.catch) {
-            p.catch(() => {
-              try { video.play(); } catch {}
-            });
-          }
-        }
-        onUserMovement();
-      }
-
-      const [btnRewind, btnClapper, btnForward] = centerOverlay.querySelectorAll('.center-btn');
-      btnRewind.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        art.seek = Math.max(0, video.currentTime - 10);
-        showToast('⏪ −10s');
-        onUserMovement();
-      });
-      btnForward.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        art.seek = Math.min(video.duration || Infinity, video.currentTime + 10);
-        showToast('⏩ +10s');
-        onUserMovement();
-      });
-      btnClapper.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        togglePlayback();
-      });
-
-      // Clicking on video or mask directly toggles play/pause
-      const handleVideoAreaClick = (e) => {
-        if (e.target.closest('.art-bottom, .art-settings, .gd-menu, .help, .seek-circle, .gd-timeline-preview')) return;
-        e.stopPropagation();
-        e.preventDefault();
-        togglePlayback();
-      };
-
-      if (art.template.$video) art.template.$video.addEventListener('click', handleVideoAreaClick);
-      if (art.template.$mask) art.template.$mask.addEventListener('click', handleVideoAreaClick);
-      playerEl.addEventListener('click', handleVideoAreaClick);
+      const btnRewind = centerOverlay.querySelector('.seek-rewind');
+      const btnPlayPause = centerOverlay.querySelector('.center-clapper');
+      const btnForward = centerOverlay.querySelector('.seek-forward');
 
       /* ==========================================================================
          AUTO-HIDE CONTROLS & CURSOR CONTROLLER
-         Even if cursor is on player, idle timer hides everything! Only movement shows bar.
+         Stationary cursor hides everything after 2s while playing. Movement restores.
          ========================================================================== */
       let lastMoveTime = Date.now();
       let idleInterval = null;
       const IDLE_LIMIT = 2000; // 2 seconds
 
-      function onUserMovement() {
+      function showControls() {
         lastMoveTime = Date.now();
-        playerEl.classList.remove('gd-force-hide');
+        playerEl.classList.remove('gd-idle-hidden', 'gd-force-hide', 'art-hide-cursor');
         playerEl.classList.add('art-control-show');
         try { art.controls.show = true; } catch {}
       }
 
-      playerEl.addEventListener('mousemove', onUserMovement);
-      playerEl.addEventListener('pointermove', onUserMovement);
+      function hideControls() {
+        if (video.paused || video.ended || !art.playing) return;
+        if (playerEl.querySelector('.gd-menu') || playerEl.querySelector('.help')) return;
+
+        playerEl.classList.add('gd-idle-hidden');
+        playerEl.classList.remove('art-control-show');
+        try { art.controls.show = false; } catch {}
+      }
+
+      function onUserMovement() {
+        showControls();
+      }
+
+      playerEl.addEventListener('mousemove', onUserMovement, { passive: true });
+      playerEl.addEventListener('pointermove', onUserMovement, { passive: true });
       playerEl.addEventListener('touchstart', onUserMovement, { passive: true });
 
       clearInterval(idleInterval);
       idleInterval = setInterval(() => {
-        if (video.paused) {
-          playerEl.classList.remove('gd-force-hide');
+        if (video.paused || video.ended || !art.playing) {
+          showControls();
           return;
         }
-        if (playerEl.querySelector('.gd-menu')) return;
-
-        const idleMs = Date.now() - lastMoveTime;
-        if (idleMs >= IDLE_LIMIT) {
-          playerEl.classList.add('gd-force-hide');
-          playerEl.classList.remove('art-control-show');
-          try { art.controls.show = false; } catch {}
+        if (Date.now() - lastMoveTime >= IDLE_LIMIT) {
+          hideControls();
         }
-      }, 200);
+      }, 250);
 
       playerEl.addEventListener('mouseleave', () => {
-        if (!video.paused) {
-          playerEl.classList.add('gd-force-hide');
-          playerEl.classList.remove('art-control-show');
+        if (!video.paused && !video.ended && art.playing) {
+          hideControls();
         }
+      });
+
+      function togglePlayback() {
+        try {
+          if (art.playing || (!video.paused && !video.ended)) {
+            art.pause();
+            video.pause();
+          } else {
+            const p = art.play();
+            if (p !== undefined && p && p.catch) {
+              p.catch(() => {
+                try { video.play(); } catch {}
+              });
+            }
+          }
+        } catch (err) {
+          if (video.paused) {
+            try { video.play(); } catch {}
+          } else {
+            try { video.pause(); } catch {}
+          }
+        }
+        showControls();
+      }
+
+      function doRewind() {
+        const cur = (typeof art.currentTime === 'number' && !isNaN(art.currentTime))
+          ? art.currentTime
+          : (video.currentTime || 0);
+        const target = Math.max(0, cur - 10);
+        try { art.currentTime = target; } catch {}
+        try { video.currentTime = target; } catch {}
+        try { art.seek = target; } catch {}
+        showToast('⏪ −10s');
+        showControls();
+      }
+
+      function doForward() {
+        const cur = (typeof art.currentTime === 'number' && !isNaN(art.currentTime))
+          ? art.currentTime
+          : (video.currentTime || 0);
+        const dur = (typeof art.duration === 'number' && !isNaN(art.duration) && art.duration > 0)
+          ? art.duration
+          : (video.duration || Infinity);
+        const target = Math.min(dur, cur + 10);
+        try { art.currentTime = target; } catch {}
+        try { video.currentTime = target; } catch {}
+        try { art.seek = target; } catch {}
+        showToast('⏩ +10s');
+        showControls();
+      }
+
+      btnRewind.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        doRewind();
+      });
+      btnForward.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        doForward();
+      });
+      btnPlayPause.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePlayback();
+      });
+
+      btnRewind.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') {
+          e.preventDefault();
+          e.stopPropagation();
+          doRewind();
+        }
+      });
+      btnForward.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') {
+          e.preventDefault();
+          e.stopPropagation();
+          doForward();
+        }
+      });
+      btnPlayPause.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') {
+          e.preventDefault();
+          e.stopPropagation();
+          togglePlayback();
+        }
+      });
+
+      // Direct single click on video area (excluding controls, menus, center buttons)
+      playerEl.addEventListener('click', (e) => {
+        if (e.target.closest('.art-bottom, .art-top, .art-settings, .gd-menu, .help, .gd-center-controls, .gd-timeline-preview, .art-controls, .center-btn')) {
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        togglePlayback();
       });
 
       const onPlayState = () => {
         playerEl.classList.add('art-state-play');
         playerEl.classList.remove('art-state-pause');
-        btnClapper.innerHTML = SVG_ICONS.pause;
-        onUserMovement();
+        btnPlayPause.innerHTML = SVG_ICONS.pause;
+        btnPlayPause.setAttribute('title', 'Pause (Space)');
+        showControls();
       };
 
       const onPauseState = () => {
         playerEl.classList.remove('art-state-play');
         playerEl.classList.add('art-state-pause');
-        playerEl.classList.remove('gd-force-hide');
-        btnClapper.innerHTML = SVG_ICONS.play;
-        onUserMovement();
+        btnPlayPause.innerHTML = SVG_ICONS.play;
+        btnPlayPause.setAttribute('title', 'Play (Space)');
+        showControls();
       };
 
       art.on('play', onPlayState);
@@ -2346,7 +2407,10 @@
           const rect = progressBar.getBoundingClientRect();
           const playerRect = playerEl.getBoundingClientRect();
           const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-          const targetTime = ratio * (video.duration || 0);
+          const dur = (typeof art.duration === 'number' && !isNaN(art.duration) && art.duration > 0)
+            ? art.duration
+            : (video.duration || 0);
+          const targetTime = ratio * dur;
 
           const halfWidth = 80;
           const cursorX = e.clientX - playerRect.left;
@@ -2684,8 +2748,7 @@
           if (zone && zone === lastZone && now - lastTap < 400) {
             e.stopPropagation();
             streak++;
-            const seekDiff = zone * 10;
-            art.seek = Math.max(0, Math.min(video.duration || Infinity, video.currentTime + seekDiff));
+            if (zone > 0) doForward(); else doRewind();
             if (ripple) ripple.remove();
             ripple = document.createElement('div');
             ripple.className = 'gd-ripple ' + (zone < 0 ? 'l' : 'r');
@@ -2726,19 +2789,17 @@
           case ' ':
           case 'k':
           case 'K':
-            art.toggle();
+            togglePlayback();
             break;
           case 'ArrowRight':
           case 'l':
           case 'L':
-            art.seek = Math.min(video.duration || Infinity, video.currentTime + (e.shiftKey ? 30 : 10));
-            showToast(`Forward 10s`);
+            doForward();
             break;
           case 'ArrowLeft':
           case 'j':
           case 'J':
-            art.seek = Math.max(0, video.currentTime - (e.shiftKey ? 30 : 10));
-            showToast(`Backward 10s`);
+            doRewind();
             break;
           case 'ArrowUp':
             volBooster.step(1, art, boostBadge);
