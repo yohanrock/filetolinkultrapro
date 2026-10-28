@@ -663,32 +663,40 @@
       color: #e5e7eb;
     }
 
-    /* Toast HUD */
+    /* Toast HUD (In-Place Single Preview Box) */
     .toast-host {
-      position: fixed;
+      position: absolute;
+      top: 16%;
       left: 50%;
-      bottom: calc(26px + env(safe-area-inset-bottom));
       transform: translateX(-50%);
-      z-index: 99999;
+      z-index: 150 !important;
       display: flex;
       flex-direction: column;
-      gap: 8px;
       align-items: center;
-      pointer-events: none;
+      justify-content: center;
+      pointer-events: none !important;
       width: max-content;
-      max-width: calc(100vw - 32px);
+      max-width: 90%;
     }
     .gd-toast {
-      background: rgba(20, 23, 33, 0.96);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      padding: 10px 20px;
+      background: rgba(14, 18, 26, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      padding: 10px 24px;
       border-radius: 999px;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-      animation: gdFadeIn 0.2s ease;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
       text-align: center;
+      white-space: nowrap;
+      pointer-events: none !important;
+      transition: opacity 0.2s ease, transform 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    .gd-toast.pop {
+      transform: scale(1.08);
     }
 
     @keyframes gdFadeIn {
@@ -1139,17 +1147,43 @@
       pip: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/></svg>',
     };
 
-    function showToast(msg, duration = 2500) {
-      const host = document.getElementById('toast-host');
+    let activeToast = null;
+    let toastHideTimer = null;
+
+    function showToast(msg, duration = 1800) {
+      let host = (typeof playerEl !== 'undefined' && playerEl && playerEl.querySelector('.toast-host')) || document.getElementById('toast-host');
+      if (!host && typeof playerEl !== 'undefined' && playerEl) {
+        host = document.createElement('div');
+        host.className = 'toast-host';
+        host.id = 'toast-host';
+        playerEl.appendChild(host);
+      }
       if (!host) return;
-      const t = document.createElement('div');
-      t.className = 'gd-toast';
-      t.textContent = msg;
-      host.appendChild(t);
-      setTimeout(() => {
-        t.style.opacity = '0';
-        t.style.transition = 'opacity 0.25s ease';
-        setTimeout(() => t.remove(), 250);
+
+      if (!activeToast || !activeToast.parentNode) {
+        host.innerHTML = '';
+        activeToast = document.createElement('div');
+        activeToast.className = 'gd-toast';
+        host.appendChild(activeToast);
+      }
+
+      activeToast.textContent = msg;
+      activeToast.style.opacity = '1';
+      activeToast.classList.remove('pop');
+      void activeToast.offsetWidth;
+      activeToast.classList.add('pop');
+
+      clearTimeout(toastHideTimer);
+      toastHideTimer = setTimeout(() => {
+        if (activeToast) {
+          activeToast.style.opacity = '0';
+          setTimeout(() => {
+            if (activeToast && activeToast.style.opacity === '0') {
+              activeToast.remove();
+              activeToast = null;
+            }
+          }, 200);
+        }
       }, duration);
     }
 
@@ -2022,12 +2056,19 @@
           }
           if (L > 0) art.muted = false;
           if (badge) badge.textContent = L > 1 ? Math.round(L * 100) + '%' : '';
-          showToast('Volume ' + Math.round(L * 100) + '%');
+          showToast(`🔊 Volume ${Math.round(L * 100)}%`);
         },
         step(dir, art, badge) {
-          const current = (boost > 1) ? boost : (art.muted ? 0 : video.volume);
-          const next = dir > 0 ? (current >= 1 ? current + 0.5 : current + 0.1) : (current > 1 ? current - 0.5 : current - 0.1);
-          this.setLevel(next, art, badge);
+          const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4];
+          let current = (boost > 1) ? boost : 1;
+          let idx = 0;
+          let minDiff = 999;
+          steps.forEach((s, i) => {
+            const diff = Math.abs(s - current);
+            if (diff < minDiff) { minDiff = diff; idx = i; }
+          });
+          const nextIdx = dir > 0 ? Math.min(steps.length - 1, idx + 1) : Math.max(0, idx - 1);
+          this.setLevel(steps[nextIdx], art, badge);
         }
       };
     }
@@ -2143,7 +2184,7 @@
             name: 'gd-boost',
             html: SVG_ICONS.volBoost + ' Volume boost',
             tooltip: '100%',
-            selector: [1, 1.5, 2, 3, 4].map(v => ({ html: v === 1 ? 'Off (100%)' : Math.round(v * 100) + '%', value: v, default: v === 1 })),
+            selector: [1, 1.5, 2, 2.5, 3, 3.5, 4].map(v => ({ html: v === 1 ? 'Off (100%)' : Math.round(v * 100) + '%', value: v, default: v === 1 })),
             onSelect(item) {
               volBooster.setLevel(item.value, art, boostBadge);
               return Math.round(item.value * 100) + '%';
@@ -2276,6 +2317,10 @@
         showControls();
       }
 
+      let seekStreak = 0;
+      let seekStreakDir = 0;
+      let seekStreakTimer = null;
+
       function doRewind() {
         const cur = (typeof art.currentTime === 'number' && !isNaN(art.currentTime))
           ? art.currentTime
@@ -2284,7 +2329,21 @@
         try { art.currentTime = target; } catch {}
         try { video.currentTime = target; } catch {}
         try { art.seek = target; } catch {}
-        showToast('⏪ −10s');
+
+        if (seekStreakDir === -1) {
+          seekStreak++;
+        } else {
+          seekStreak = 1;
+          seekStreakDir = -1;
+        }
+
+        clearTimeout(seekStreakTimer);
+        seekStreakTimer = setTimeout(() => {
+          seekStreak = 0;
+          seekStreakDir = 0;
+        }, 1200);
+
+        showToast(`⏪ −${seekStreak * 10}s`);
         showControls();
       }
 
@@ -2299,7 +2358,21 @@
         try { art.currentTime = target; } catch {}
         try { video.currentTime = target; } catch {}
         try { art.seek = target; } catch {}
-        showToast('⏩ +10s');
+
+        if (seekStreakDir === 1) {
+          seekStreak++;
+        } else {
+          seekStreak = 1;
+          seekStreakDir = 1;
+        }
+
+        clearTimeout(seekStreakTimer);
+        seekStreakTimer = setTimeout(() => {
+          seekStreak = 0;
+          seekStreakDir = 0;
+        }, 1200);
+
+        showToast(`⏩ +${seekStreak * 10}s`);
         showControls();
       }
 
@@ -2579,17 +2652,19 @@
          14. MENUS & SELECTIONS (Audio, Subtitles, Aspect Ratio)
          ========================================================================== */
       function closeMenu() {
-        if (menuEl) { menuEl.remove(); menuEl = null; }
-        if (!video.paused) revealControlsOnMovement();
+        if (menuEl) {
+          menuEl.remove();
+          menuEl = null;
+        }
+        showControls();
       }
 
       function toggleMenu(which) {
-        if (menuEl && menuEl.dataset.which === which) return closeMenu();
+        if (menuEl && menuEl.dataset.which === which) {
+          return closeMenu();
+        }
         closeMenu();
-        clearTimeout(hideTimeout);
-        playerEl.classList.add('art-control-show');
-        playerEl.classList.remove('art-hide-cursor');
-        playerEl.classList.remove('gd-idle-hidden');
+        showControls();
 
         // 1. Aspect Ratio Menu (Exact match to screenshot)
         if (which === 'aspect') {
@@ -2747,15 +2822,7 @@
           const now = Date.now();
           if (zone && zone === lastZone && now - lastTap < 400) {
             e.stopPropagation();
-            streak++;
             if (zone > 0) doForward(); else doRewind();
-            if (ripple) ripple.remove();
-            ripple = document.createElement('div');
-            ripple.className = 'gd-ripple ' + (zone < 0 ? 'l' : 'r');
-            ripple.innerHTML = `<span>${zone < 0 ? '⏪ ' : ''}${streak * 10}s${zone > 0 ? ' ⏩' : ''}</span>`;
-            playerEl.appendChild(ripple);
-            const myRip = ripple;
-            setTimeout(() => { if (myRip.parentNode) myRip.remove(); }, 650);
             lastTap = now;
             return;
           }
