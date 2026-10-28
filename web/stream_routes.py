@@ -52,6 +52,18 @@ async def stream_watch_handler(request: web.Request):
         logging.critical(e)
         return web.Response(status=500, text=str(e))
 
+@routes.options(r"/{path:\S+}")
+async def options_handler(request: web.Request):
+    return web.Response(
+        status=204,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Range, Content-Type, Authorization",
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
+
 @routes.get(r"/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):
     try:
@@ -132,10 +144,17 @@ async def media_streamer(request: web.Request, id: int, secure_hash: str):
             "Content-Range": f"bytes {from_bytes}-{until_bytes}/{file_size}",
             "Content-Disposition": f'inline; filename="{file_name}"',
             "Accept-Ranges": "bytes",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Range, Content-Type, Authorization",
+            "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges, Content-Type",
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
         }
     )
 
     await response.prepare(request)
+
+    if request.method == "HEAD":
+        return response
 
     try:
         async for chunk in tg_connect.yield_file(
