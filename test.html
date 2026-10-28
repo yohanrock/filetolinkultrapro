@@ -205,6 +205,12 @@
     }
 
     /* Auto-hide: hide player bar, top, and center controls when idle/hidden */
+    .art-video-player.gd-force-hide .art-bottom,
+    .art-video-player.gd-force-hide .art-top,
+    .art-video-player.gd-force-hide .art-mask-bottom,
+    .art-video-player.gd-force-hide .gd-center-controls,
+    .art-video-player.gd-force-hide .gd-timeline-preview,
+    .art-video-player.gd-force-hide .art-progress,
     .art-video-player.gd-idle-hidden .art-bottom,
     .art-video-player.gd-idle-hidden .art-top,
     .art-video-player.gd-idle-hidden .gd-center-controls,
@@ -217,19 +223,20 @@
       opacity: 0 !important;
       visibility: hidden !important;
       pointer-events: none !important;
-      transform: translateY(12px) !important;
+      transform: translateY(14px) !important;
       transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease !important;
     }
 
+    .art-video-player.gd-force-hide .gd-center-controls,
     .art-video-player.gd-idle-hidden .gd-center-controls,
     .art-video-player.art-hide-cursor .gd-center-controls,
     .art-video-player.art-state-play:not(.art-control-show) .gd-center-controls {
-      transform: translate(-50%, -50%) scale(0.92) !important;
+      transform: translate(-50%, -50%) scale(0.9) !important;
     }
 
     /* When controls are active or player is paused: show bottom bar, top, and center buttons */
-    .art-video-player.art-control-show:not(.gd-idle-hidden) .art-bottom,
-    .art-video-player.art-control-show:not(.gd-idle-hidden) .art-top,
+    .art-video-player.art-control-show:not(.gd-force-hide):not(.gd-idle-hidden) .art-bottom,
+    .art-video-player.art-control-show:not(.gd-force-hide):not(.gd-idle-hidden) .art-top,
     .art-video-player.art-state-pause .art-bottom,
     .art-video-player.art-state-pause .art-top {
       opacity: 1 !important;
@@ -239,7 +246,7 @@
       transition: opacity 0.25s ease, transform 0.25s ease !important;
     }
 
-    .art-video-player.art-control-show:not(.gd-idle-hidden) .gd-center-controls,
+    .art-video-player.art-control-show:not(.gd-force-hide):not(.gd-idle-hidden) .gd-center-controls,
     .art-video-player.art-state-pause .gd-center-controls,
     .art-video-player:not(.art-state-play) .gd-center-controls {
       opacity: 1 !important;
@@ -250,6 +257,8 @@
     }
 
     /* Hide cursor completely when idle/hidden */
+    .art-video-player.gd-force-hide,
+    .art-video-player.gd-force-hide *,
     .art-video-player.gd-idle-hidden,
     .art-video-player.gd-idle-hidden *,
     .art-video-player.art-hide-cursor,
@@ -2029,8 +2038,9 @@
        ========================================================================== */
     document.addEventListener("DOMContentLoaded", async () => {
       const container = document.getElementById('artplayer-container');
-      const ext = FILE_NAME.split('.').pop().toLowerCase();
-      const isMatroska = ['mkv', 'mka', 'webm'].includes(ext);
+      const urlExt = (FILE_URL.split('?')[0].split('.').pop() || '').toLowerCase();
+      const nameExt = (FILE_NAME.split('?')[0].split('.').pop() || '').toLowerCase();
+      const isMatroska = ['mkv', 'mka', 'webm'].includes(urlExt) || (['mkv', 'mka', 'webm'].includes(nameExt) && !['mp4', 'm4v', 'mov'].includes(urlExt));
 
       let menuEl = null, helpEl = null;
       let audioItems = [];
@@ -2043,11 +2053,21 @@
       const art = new Artplayer({
         container: container,
         url: FILE_URL,
+        type: isMatroska ? 'mkv' : '',
+        customType: {
+          mkv: function (video, url, art) {
+            if (MSE) {
+              remux = createRemux(video, url, { startAt: 0, preferIdx: audioCur });
+            } else {
+              video.src = url;
+            }
+          }
+        },
         title: FILE_NAME,
         theme: '#ff2a34',
         volume: store.get('volume', 1),
         autoplay: false,
-        pip: true,
+        pip: false,
         setting: true,
         playbackRate: false,
         aspectRatio: false,
@@ -2182,17 +2202,18 @@
       playerEl.appendChild(centerOverlay);
 
       function togglePlayback() {
-        if (video.paused) {
-          const playPromise = video.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(() => {
-              try { art.play(); } catch {}
+        if (art.playing || (!video.paused && !video.ended)) {
+          art.pause();
+          video.pause();
+        } else {
+          const p = art.play();
+          if (p !== undefined && p.catch) {
+            p.catch(() => {
+              try { video.play(); } catch {}
             });
           }
-        } else {
-          video.pause();
         }
-        revealControlsOnMovement();
+        onUserMovement();
       }
 
       const [btnRewind, btnClapper, btnForward] = centerOverlay.querySelectorAll('.center-btn');
@@ -2201,14 +2222,14 @@
         e.preventDefault();
         art.seek = Math.max(0, video.currentTime - 10);
         showToast('âª âˆ’10s');
-        revealControlsOnMovement();
+        onUserMovement();
       });
       btnForward.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
         art.seek = Math.min(video.duration || Infinity, video.currentTime + 10);
         showToast('â© +10s');
-        revealControlsOnMovement();
+        onUserMovement();
       });
       btnClapper.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -2216,75 +2237,73 @@
         togglePlayback();
       });
 
+      // Clicking on video or mask directly toggles play/pause
+      const handleVideoAreaClick = (e) => {
+        if (e.target.closest('.art-bottom, .art-settings, .gd-menu, .help, .seek-circle, .gd-timeline-preview')) return;
+        e.stopPropagation();
+        e.preventDefault();
+        togglePlayback();
+      };
+
+      if (art.template.$video) art.template.$video.addEventListener('click', handleVideoAreaClick);
+      if (art.template.$mask) art.template.$mask.addEventListener('click', handleVideoAreaClick);
+      playerEl.addEventListener('click', handleVideoAreaClick);
+
       /* ==========================================================================
          AUTO-HIDE CONTROLS & CURSOR CONTROLLER
          Even if cursor is on player, idle timer hides everything! Only movement shows bar.
          ========================================================================== */
-      let hideTimeout = null;
-      const AUTO_HIDE_DELAY = 2200;
+      let lastMoveTime = Date.now();
+      let idleInterval = null;
+      const IDLE_LIMIT = 2000; // 2 seconds
 
-      function hideEverything() {
-        if (video.paused) return; // Keep controls visible if video is paused
-        const menuOpen = playerEl.querySelector('.gd-menu');
-        const settingsOpen = playerEl.querySelector('.art-settings:not([style*="display: none"])');
-        if (menuOpen || settingsOpen) return;
-
-        playerEl.classList.remove('art-control-show');
-        playerEl.classList.add('art-hide-cursor');
-        playerEl.classList.add('gd-idle-hidden');
-        try { art.controls.show = false; } catch {}
-      }
-
-      function revealControlsOnMovement() {
-        clearTimeout(hideTimeout);
+      function onUserMovement() {
+        lastMoveTime = Date.now();
+        playerEl.classList.remove('gd-force-hide');
         playerEl.classList.add('art-control-show');
-        playerEl.classList.remove('art-hide-cursor');
-        playerEl.classList.remove('gd-idle-hidden');
         try { art.controls.show = true; } catch {}
-
-        if (!video.paused) {
-          hideTimeout = setTimeout(hideEverything, AUTO_HIDE_DELAY);
-        }
       }
 
-      // Any cursor movement across player reveals controls and resets countdown
-      playerEl.addEventListener('mousemove', () => {
-        revealControlsOnMovement();
-      });
+      playerEl.addEventListener('mousemove', onUserMovement);
+      playerEl.addEventListener('pointermove', onUserMovement);
+      playerEl.addEventListener('touchstart', onUserMovement, { passive: true });
 
-      // Pointer leaves player -> immediately hide if playing
+      clearInterval(idleInterval);
+      idleInterval = setInterval(() => {
+        if (video.paused) {
+          playerEl.classList.remove('gd-force-hide');
+          return;
+        }
+        if (playerEl.querySelector('.gd-menu')) return;
+
+        const idleMs = Date.now() - lastMoveTime;
+        if (idleMs >= IDLE_LIMIT) {
+          playerEl.classList.add('gd-force-hide');
+          playerEl.classList.remove('art-control-show');
+          try { art.controls.show = false; } catch {}
+        }
+      }, 200);
+
       playerEl.addEventListener('mouseleave', () => {
         if (!video.paused) {
-          clearTimeout(hideTimeout);
-          hideEverything();
+          playerEl.classList.add('gd-force-hide');
+          playerEl.classList.remove('art-control-show');
         }
-      });
-
-      // Touch tap reveals controls
-      playerEl.addEventListener('touchstart', () => {
-        revealControlsOnMovement();
-      }, { passive: true });
-
-      // Click on player video area toggles play/pause
-      playerEl.addEventListener('click', (e) => {
-        if (e.target.closest('.art-bottom, .art-settings, .gd-menu, .help, .center-btn, .gd-timeline-preview')) return;
-        togglePlayback();
       });
 
       const onPlayState = () => {
         playerEl.classList.add('art-state-play');
         playerEl.classList.remove('art-state-pause');
         btnClapper.innerHTML = SVG_ICONS.pause;
-        clearTimeout(hideTimeout);
-        hideTimeout = setTimeout(hideEverything, AUTO_HIDE_DELAY);
+        onUserMovement();
       };
 
       const onPauseState = () => {
         playerEl.classList.remove('art-state-play');
         playerEl.classList.add('art-state-pause');
+        playerEl.classList.remove('gd-force-hide');
         btnClapper.innerHTML = SVG_ICONS.play;
-        clearTimeout(hideTimeout);
-        revealControlsOnMovement();
+        onUserMovement();
       };
 
       art.on('play', onPlayState);
@@ -2296,13 +2315,13 @@
       onPauseState();
 
       /* ==========================================================================
-         LIVE VIDEO TIMELINE SCRUBBER PREVIEW ON HOVER
+         LIVE VIDEO TIMELINE SCRUBBER PREVIEW ON HOVER (SHOWS MOVING VIDEO)
          ========================================================================== */
       const previewWrap = document.createElement('div');
       previewWrap.className = 'gd-timeline-preview';
       previewWrap.innerHTML = `
         <div class="gd-preview-box">
-          <video class="gd-preview-video" preload="metadata" muted playsinline></video>
+          <video class="gd-preview-video" preload="auto" muted playsinline></video>
         </div>
         <div class="gd-preview-time">00:00</div>
       `;
@@ -2311,11 +2330,17 @@
       const previewVid = previewWrap.querySelector('.gd-preview-video');
       previewVid.src = FILE_URL;
       previewVid.muted = true;
+      previewVid.playsInline = true;
       const previewTimeEl = previewWrap.querySelector('.gd-preview-time');
 
-      let seekThrottle = 0;
-      const progressBar = playerEl.querySelector('.art-progress');
+      let previewLoopStart = 0;
+      previewVid.addEventListener('timeupdate', () => {
+        if (previewLoopStart && previewVid.currentTime > previewLoopStart + 3.2) {
+          previewVid.currentTime = previewLoopStart;
+        }
+      });
 
+      const progressBar = playerEl.querySelector('.art-progress');
       if (progressBar) {
         progressBar.addEventListener('mousemove', (e) => {
           const rect = progressBar.getBoundingClientRect();
@@ -2323,7 +2348,7 @@
           const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
           const targetTime = ratio * (video.duration || 0);
 
-          const halfWidth = 77;
+          const halfWidth = 80;
           const cursorX = e.clientX - playerRect.left;
           const clampedX = Math.max(halfWidth + 6, Math.min(playerRect.width - halfWidth - 6, cursorX));
           previewWrap.style.left = clampedX + 'px';
@@ -2333,17 +2358,19 @@
           const secs = Math.floor(targetTime % 60);
           previewTimeEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-          const now = Date.now();
-          if (now - seekThrottle > 80) {
-            seekThrottle = now;
-            if (Math.abs(previewVid.currentTime - targetTime) > 0.4) {
-              previewVid.currentTime = targetTime;
-            }
+          // Live animated video preview playing around hovered time
+          if (Math.abs(previewLoopStart - targetTime) > 1.2) {
+            previewLoopStart = targetTime;
+            previewVid.currentTime = targetTime;
+            const p = previewVid.play();
+            if (p && p.catch) p.catch(() => {});
           }
         });
 
         progressBar.addEventListener('mouseleave', () => {
           previewWrap.style.display = 'none';
+          previewLoopStart = 0;
+          previewVid.pause();
         });
       }
 
