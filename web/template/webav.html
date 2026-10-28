@@ -293,7 +293,71 @@
       opacity: 0.85;
     }
 
-    /* Pop-up Menus (Audio & Subtitles) */
+    /* Aspect Ratio Popup Menu (Exact match to screenshot) */
+    .gd-menu.aspect-menu {
+      min-width: 180px;
+      max-width: 210px;
+      max-height: 250px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      background: #141518;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      padding: 4px;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85);
+      z-index: 120;
+    }
+
+    /* Custom Scrollbar matching screenshot */
+    .gd-menu.aspect-menu::-webkit-scrollbar {
+      width: 14px;
+    }
+    .gd-menu.aspect-menu::-webkit-scrollbar-track {
+      background: #1c1d22;
+      border-radius: 0 8px 8px 0;
+    }
+    .gd-menu.aspect-menu::-webkit-scrollbar-thumb {
+      background: #8e9095;
+      border: 3px solid #1c1d22;
+      border-radius: 7px;
+    }
+    .gd-menu.aspect-menu::-webkit-scrollbar-button:single-button {
+      background-color: #1c1d22;
+      display: block;
+      border-style: solid;
+      height: 12px;
+      width: 14px;
+    }
+    .gd-menu.aspect-menu::-webkit-scrollbar-button:single-button:vertical:decrement {
+      border-width: 0 4px 5px 4px;
+      border-color: transparent transparent #8e9095 transparent;
+    }
+    .gd-menu.aspect-menu::-webkit-scrollbar-button:single-button:vertical:increment {
+      border-width: 5px 4px 0 4px;
+      border-color: #8e9095 transparent transparent transparent;
+    }
+
+    .aspect-menu-item {
+      padding: 10px 14px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #e5e7eb;
+      cursor: pointer;
+      border-radius: 8px;
+      margin-bottom: 2px;
+      transition: all 0.12s ease;
+      user-select: none;
+    }
+    .aspect-menu-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .aspect-menu-item.selected {
+      color: #ff1e27 !important;
+      background: rgba(255, 30, 39, 0.18) !important;
+      font-weight: 700;
+    }
+
+    /* General Pop-up Menus (Audio & Subtitles) */
     .gd-menu {
       position: absolute;
       right: 12px;
@@ -941,7 +1005,7 @@
       rewind10: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.2 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.91 11.08 17.07 8 12.5 8z"/></svg>',
       forward10: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M11.5 8c2.65 0 5.05.99 6.9 2.6L22 7v9h-9l3.62-3.62c-1.39-1.2-3.16-1.88-5.12-1.88-3.54 0-6.55 2.31-7.6 5.5l-2.37-.78C3.09 11.08 6.93 8 11.5 8z"/></svg>',
       clapper: '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>',
-      aspectRatio: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/></svg>',
+      aspectRatio: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/></svg>',
       addSub: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/></svg>',
       volBoost: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>',
       subSize: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z"/></svg>',
@@ -972,7 +1036,23 @@
     };
 
     /* ==========================================================================
-       3. LANGUAGES & CODEC LABELS
+       3. MAXIMUM ASPECT RATIOS CONFIGURATION
+       ========================================================================== */
+    const aspectRatios = [
+      { label: 'Fit (Default)', value: 'default', fit: 'contain' },
+      { label: 'Stretch', value: 'stretch', fit: 'fill' },
+      { label: 'Zoom / Crop', value: 'crop', fit: 'cover' },
+      { label: '16:9 Widescreen', value: '16:9', fit: 'contain' },
+      { label: '9:16 Vertical', value: '9:16', fit: 'contain' },
+      { label: '4:3 Standard', value: '4:3', fit: 'contain' },
+      { label: '21:9 Ultrawide', value: '21:9', fit: 'contain' },
+      { label: '18:9 Univisium (2:1)', value: '2:1', fit: 'contain' },
+      { label: '1:1 Square', value: '1:1', fit: 'contain' }
+    ];
+    let currentAspect = 'default';
+
+    /* ==========================================================================
+       4. LANGUAGES & CODEC LABELS
        ========================================================================== */
     const LANGS = {
       eng: 'English', en: 'English', hin: 'Hindi', hi: 'Hindi', tel: 'Telugu', te: 'Telugu',
@@ -1025,7 +1105,7 @@
     function subFont(id) { return SUB_FONTS.find(f => f.id === id) || SUB_FONTS[0]; }
 
     /* ==========================================================================
-       4. MKV (EBML) BYTE-RANGE PARSER
+       5. MKV (EBML) BYTE-RANGE PARSER
        ========================================================================== */
     const ID = {
       EBML: 0x1A45DFA3, Segment: 0x18538067, SeekHead: 0x114D9B74, Seek: 0x4DBB, SeekID: 0x53AB, SeekPosition: 0x53AC,
@@ -1179,7 +1259,7 @@
     }
 
     /* ==========================================================================
-       5. SUBTITLES ENGINE & PARSERS
+       6. SUBTITLES ENGINE & PARSERS
        ========================================================================== */
     function createSubtitleLayer(art, playerContainer) {
       const layer = document.createElement('div');
@@ -1326,7 +1406,7 @@
     }
 
     /* ==========================================================================
-       6. AUDIO REMUXER & WASM DECODER
+       7. AUDIO REMUXER & WASM DECODER
        ========================================================================== */
     const decoderPlugins = {};
     function ensureDecoder(codec) {
@@ -1338,7 +1418,7 @@
     }
 
     /* ==========================================================================
-       7. AUDIO CONTEXT 400% VOLUME BOOST
+       8. AUDIO CONTEXT 400% VOLUME BOOST
        ========================================================================== */
     function setupVolumeBoost(video) {
       const MAX_BOOST = 4;
@@ -1407,7 +1487,7 @@
     }
 
     /* ==========================================================================
-       8. MAIN ARTPLAYER SETUP
+       9. MAIN ARTPLAYER SETUP
        ========================================================================== */
     document.addEventListener("DOMContentLoaded", async () => {
       const container = document.getElementById('artplayer-container');
@@ -1445,9 +1525,17 @@
         fastForward: true,
         controls: [
           {
-            name: 'quality',
+            name: 'gd-audio',
             position: 'right',
             index: 1,
+            html: '<i class="gd-ico">' + SVG_ICONS.headphones + '</i>',
+            tooltip: 'Audio Track (A)',
+            click: () => toggleMenu('audio')
+          },
+          {
+            name: 'quality',
+            position: 'right',
+            index: 2,
             html: '<span class="fw-bold" style="font-size:12px;border:1px solid currentColor;padding:1px 5px;border-radius:4px;">HD</span>',
             tooltip: '1080p',
             selector: [
@@ -1463,20 +1551,20 @@
             }
           },
           {
+            name: 'aspect-ratio',
+            position: 'right',
+            index: 3,
+            html: '<i class="gd-ico">' + SVG_ICONS.aspectRatio + '</i>',
+            tooltip: 'Aspect Ratio',
+            click: () => toggleMenu('aspect')
+          },
+          {
             name: 'gd-subs',
             position: 'right',
-            index: 2,
+            index: 4,
             html: '<i class="gd-ico">' + SVG_ICONS.sub + '</i>',
             tooltip: 'Subtitles (C)',
             click: () => toggleMenu('subs')
-          },
-          {
-            name: 'gd-audio',
-            position: 'right',
-            index: 3,
-            html: '<i class="gd-ico">' + SVG_ICONS.headphones + '</i>',
-            tooltip: 'Audio Track (A)',
-            click: () => toggleMenu('audio')
           },
           IS_TOUCH ? {
             name: 'gd-rotate',
@@ -1491,29 +1579,16 @@
           {
             name: 'aspect-ratio',
             html: SVG_ICONS.aspectRatio + ' Aspect Ratio',
-            tooltip: 'Default',
-            selector: [
-              { html: 'Default', value: 'default', default: true },
-              { html: '16:9', value: '16:9' },
-              { html: '4:3', value: '4:3' },
-              { html: 'Fill / Cover', value: 'cover' },
-              { html: 'Stretch', value: 'fill' }
-            ],
+            tooltip: 'Fit (Default)',
+            selector: aspectRatios.map(r => ({
+              html: r.value === 'default' ? `<span style="color:#ff1e27;font-weight:700;">${r.label}</span>` : r.label,
+              value: r.value,
+              default: r.value === 'default'
+            })),
             onSelect(item) {
-              if (item.value === 'default') {
-                art.aspectRatio = 'default';
-                video.style.objectFit = '';
-              } else if (item.value === 'cover') {
-                art.aspectRatio = 'default';
-                video.style.objectFit = 'cover';
-              } else if (item.value === 'fill') {
-                art.aspectRatio = 'default';
-                video.style.objectFit = 'fill';
-              } else {
-                video.style.objectFit = '';
-                art.aspectRatio = item.value;
-              }
-              return item.html;
+              const found = aspectRatios.find(x => x.value === item.value) || aspectRatios[0];
+              selectAspectRatio(found);
+              return found.label;
             }
           },
           {
@@ -1637,7 +1712,7 @@
       fitControls();
 
       /* ==========================================================================
-         9. CENTER 10s REWIND, CLAPPER PLAY, 10s FORWARD CONTROLS
+         10. CENTER 10s REWIND, CLAPPER PLAY, 10s FORWARD CONTROLS
          ========================================================================== */
       const centerOverlay = document.createElement('div');
       centerOverlay.className = 'gd-center-controls';
@@ -1673,7 +1748,7 @@
       });
 
       /* ==========================================================================
-         10. TRACK PARSING & INITIALIZATION
+         11. TRACK PARSING & INITIALIZATION
          ========================================================================== */
       (async () => {
         try {
@@ -1719,7 +1794,7 @@
       }
 
       /* ==========================================================================
-         11. SUBTITLE FILE UPLOAD ("Add subtitles -> Site or device")
+         12. SUBTITLE FILE UPLOAD ("Add subtitles -> Site or device")
          ========================================================================== */
       const fileInput = document.getElementById('sub-file-input');
       function triggerSubtitleUpload() {
@@ -1757,7 +1832,29 @@
       }
 
       /* ==========================================================================
-         12. MENUS & SELECTIONS
+         13. ASPECT RATIO SWITCHING LOGIC
+         ========================================================================== */
+      function selectAspectRatio(ratio) {
+        currentAspect = ratio.value;
+        if (ratio.value === 'default') {
+          art.aspectRatio = 'default';
+          video.style.objectFit = 'contain';
+        } else if (ratio.value === 'stretch') {
+          art.aspectRatio = 'default';
+          video.style.objectFit = 'fill';
+        } else if (ratio.value === 'crop') {
+          art.aspectRatio = 'default';
+          video.style.objectFit = 'cover';
+        } else {
+          video.style.objectFit = 'contain';
+          art.aspectRatio = ratio.value;
+        }
+        showToast(`Aspect Ratio: ${ratio.label}`);
+        closeMenu();
+      }
+
+      /* ==========================================================================
+         14. MENUS & SELECTIONS (Audio, Subtitles, Aspect Ratio)
          ========================================================================== */
       function closeMenu() {
         if (menuEl) { menuEl.remove(); menuEl = null; }
@@ -1766,6 +1863,30 @@
       function toggleMenu(which) {
         if (menuEl && menuEl.dataset.which === which) return closeMenu();
         closeMenu();
+
+        // 1. Aspect Ratio Menu (Exact match to screenshot)
+        if (which === 'aspect') {
+          menuEl = document.createElement('div');
+          menuEl.className = 'gd-menu aspect-menu';
+          menuEl.dataset.which = 'aspect';
+
+          aspectRatios.forEach(r => {
+            const isSelected = (currentAspect === r.value);
+            const row = document.createElement('div');
+            row.className = 'aspect-menu-item' + (isSelected ? ' selected' : '');
+            row.textContent = r.label;
+            row.addEventListener('click', (e) => {
+              e.stopPropagation();
+              selectAspectRatio(r);
+            });
+            menuEl.appendChild(row);
+          });
+
+          playerEl.appendChild(menuEl);
+          return;
+        }
+
+        // 2. Audio & Subtitle Menus
         const items = which === 'audio' ? audioItems : subItems;
         const cur = which === 'audio' ? audioCur : currentSub;
 
@@ -1846,7 +1967,7 @@
       }
 
       /* ==========================================================================
-         13. TOUCH GESTURES (DOUBLE TAP SEEK & ROTATE)
+         15. TOUCH GESTURES (DOUBLE TAP SEEK & ROTATE)
          ========================================================================== */
       if (IS_TOUCH) {
         let lastTap = 0, lastZone = 0, streak = 0, ripple = null;
@@ -1890,7 +2011,7 @@
       }
 
       /* ==========================================================================
-         14. KEYBOARD SHORTCUTS
+         16. KEYBOARD SHORTCUTS
          ========================================================================== */
       document.addEventListener('keydown', (e) => {
         if (e.target.matches('input, textarea, select')) return;
@@ -2023,7 +2144,7 @@
 
       // Close menu on outside click
       document.addEventListener('pointerdown', (e) => {
-        if (menuEl && !menuEl.contains(e.target) && !e.target.closest('.art-control-gd-audio, .art-control-gd-subs')) {
+        if (menuEl && !menuEl.contains(e.target) && !e.target.closest('.art-control-gd-audio, .art-control-gd-subs, .art-control-aspect-ratio')) {
           closeMenu();
         }
       }, true);
@@ -2031,7 +2152,7 @@
     });
 
     /* ==========================================================================
-       15. TABBED EXTERNAL PLAYERS (Desktop | Android | iOS)
+       17. TABBED EXTERNAL PLAYERS (Desktop | Android | iOS)
        ========================================================================== */
     function switchExtTab(platform) {
       document.querySelectorAll('.ext-tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -2056,7 +2177,7 @@
     })();
 
     /* ==========================================================================
-       16. EXTERNAL PLAYER LAUNCH PROTOCOLS
+       18. EXTERNAL PLAYER LAUNCH PROTOCOLS
        ========================================================================== */
     function vlc_player() {
       const streamUrl = FILE_URL;
@@ -2141,7 +2262,7 @@
     }
 
     /* ==========================================================================
-       17. PRIMARY ACTIONS (DOWNLOAD, COPY LINK, CAST)
+       19. PRIMARY ACTIONS (DOWNLOAD, COPY LINK, CAST)
        ========================================================================== */
     function streamDownload() {
       const a = document.createElement('a');
