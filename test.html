@@ -190,13 +190,24 @@
       z-index: 28;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.22s ease;
+      transition: opacity 0.25s ease;
     }
 
-    .art-video-player:hover .gd-center-controls,
+    /* Only show controls when paused or when mouse is actively moving */
     .art-video-player.art-control-show .gd-center-controls,
     .art-video-player.art-state-pause .gd-center-controls {
       opacity: 1;
+      pointer-events: auto;
+    }
+    .art-video-player.art-hide-cursor .gd-center-controls,
+    .art-video-player:not(.art-control-show):not(.art-state-pause) .gd-center-controls {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* Hide redundant internal Artplayer center state icon */
+    .art-state {
+      display: none !important;
     }
 
     .center-btn {
@@ -997,7 +1008,11 @@
     /* ==========================================================================
        2. SVG ICONS & TOAST
        ========================================================================== */
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
     const SVG_ICONS = {
+      play: '<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+      pause: '<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
       playSpeed: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>',
       aspectRatioSet: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/></svg>',
       headphones: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>',
@@ -1419,62 +1434,394 @@
       }).catch(e => { delete decoderPlugins[lib]; throw e; }));
     }
 
+    function findBox(u8, from, to, path) {
+      let p = from;
+      while (p + 8 <= to) {
+        let size = ((u8[p] << 24) >>> 0) + (u8[p + 1] << 16) + (u8[p + 2] << 8) + u8[p + 3];
+        const type = String.fromCharCode(u8[p + 4], u8[p + 5], u8[p + 6], u8[p + 7]);
+        let hl = 8;
+        if (size === 1) {
+          size = (((u8[p + 8] << 24) >>> 0) + (u8[p + 9] << 16) + (u8[p + 10] << 8) + u8[p + 11]) * 4294967296 + ((u8[p + 12] << 24) >>> 0) + (u8[p + 13] << 16) + (u8[p + 14] << 8) + u8[p + 15];
+          hl = 16;
+        } else if (size === 0) size = to - p;
+        if (size < hl || p + size > to) return null;
+        if (type === path[0]) return path.length === 1 ? { s: p, d: p + hl, e: p + size } : findBox(u8, p + hl, p + size, path.slice(1));
+        p += size;
+      }
+      return null;
+    }
+
+    function moovTimescale(u8) {
+      const b = findBox(u8, 0, u8.length, ['moov', 'trak', 'mdia', 'mdhd']);
+      if (!b) return 0;
+      return new DataView(u8.buffer, u8.byteOffset, u8.byteLength).getUint32(b.d + (u8[b.d] === 1 ? 20 : 12));
+    }
+
+    function unflagFakeKey(u8, timescale, fakes) {
+      const traf = findBox(u8, 0, u8.length, ['moof', 'traf']);
+      if (!traf) return;
+      const tfhd = findBox(u8, traf.d, traf.e, ['tfhd']), tfdt = findBox(u8, traf.d, traf.e, ['tfdt']), trun = findBox(u8, traf.d, traf.e, ['trun']);
+      if (!tfhd || !tfdt || !trun) return;
+      const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+      const baseTime = u8[tfdt.d] === 1 ? dv.getUint32(tfdt.d + 4) * 4294967296 + dv.getUint32(tfdt.d + 8) : dv.getUint32(tfdt.d + 4);
+      const tf = dv.getUint32(trun.d) & 0xffffff;
+      let p = trun.d + 8;
+      if (tf & 0x1) p += 4;
+      const firstFlagsAt = tf & 0x4 ? p : -1;
+      if (tf & 0x4) p += 4;
+      if (tf & 0x100) p += 4;
+      if (tf & 0x200) p += 4;
+      const sampleFlagsAt = tf & 0x400 ? p : -1;
+      if (tf & 0x400) p += 4;
+      const cto = tf & 0x800 ? (u8[trun.d] ? dv.getInt32(p) : dv.getUint32(p)) : 0;
+      const ms = Math.round(((baseTime + cto) / timescale) * 1000);
+      if (!fakes.has(ms) && !fakes.has(ms - 1) && !fakes.has(ms + 1)) return;
+      const DELTA = 0x01010000;
+      if (firstFlagsAt >= 0) dv.setUint32(firstFlagsAt, DELTA);
+      else if (sampleFlagsAt >= 0) dv.setUint32(sampleFlagsAt, DELTA);
+      else {
+        const hf = dv.getUint32(tfhd.d) & 0xffffff;
+        let q = tfhd.d + 8;
+        if (hf & 0x1) q += 8;
+        if (hf & 0x2) q += 4;
+        if (hf & 0x8) q += 4;
+        if (hf & 0x10) q += 4;
+        if (hf & 0x20) dv.setUint32(q, DELTA);
+      }
+    }
+
+    function createRemux(video, url, opts = {}) {
+      const managed = !!window.ManagedMediaSource && MSE === window.ManagedMediaSource;
+      const AHEAD = IS_TOUCH ? 30 : 60;
+      const CUT = 0.5;
+      let mb, input, vTrack, aTracks = [], ms = null, destroyed = false, watchdog = 0;
+      let keySink = null, seekTimer = 0, snapping = false;
+      const aInfo = [], infoP = [];
+      const lanes = {};
+      let resolveReady, rejectReady, resolveInfo;
+      const ready = new Promise((res, rej) => { resolveReady = res; rejectReady = rej; });
+      const infoReady = new Promise((res) => { resolveInfo = res; });
+      ready.catch(() => resolveInfo());
+      const isType = (m) => { try { return MSE.isTypeSupported(m); } catch { return false; } };
+      const idle = (sb) => (sb.updating ? new Promise((r) => sb.addEventListener('updateend', r, { once: true })) : Promise.resolve());
+
+      let outP = null;
+      function outputCodec() {
+        return outP || (outP = (async () => {
+          for (const c of IS_SAFARI ? ['aac', 'opus'] : ['opus', 'aac']) {
+            const mime = 'audio/mp4; codecs="' + (c === 'aac' ? 'mp4a.40.2' : 'opus') + '"';
+            if (!isType(mime)) continue;
+            try { if (await mb.canEncodeAudio(c, { numberOfChannels: 2, sampleRate: 48000, bitrate: 160e3 })) return { codec: c, mime }; } catch {}
+          }
+          return null;
+        })());
+      }
+
+      function trackInfo(i) {
+        return infoP[i] || (infoP[i] = (async () => {
+          const t = aTracks[i];
+          const cs = await t.getCodecParameterString().catch(() => null);
+          if (cs && isType('audio/mp4; codecs="' + cs + '"')) return { mode: 'copy', mime: 'audio/mp4; codecs="' + cs + '"' };
+          if (!t.codec) return { mode: null, why: 'Unsupported audio codec' };
+          await ensureDecoder(t.codec);
+          const out = await outputCodec();
+          if (!out) return { mode: null, why: 'Audio codec not supported' };
+          if (!(await t.canDecode().catch(() => false))) return { mode: null, why: 'Audio cannot be decoded in browser' };
+          return { mode: 'transcode', mime: out.mime, codec: out.codec };
+        })().catch((e) => ({ mode: null, why: e.message })).then((r) => (aInfo[i] = r)));
+      }
+
+      const ctl = {
+        input: null, ready, infoReady, current: -1,
+        supports: (i) => !!lanes.a && !!aInfo[i] && !!aInfo[i].mode,
+        why: (i) => (aInfo[i] && aInfo[i].why) || 'Not supported',
+        async switchTo(i) {
+          const info = await trackInfo(i);
+          const lane = lanes.a;
+          if (!info.mode || !lane) throw new Error(info.why || 'Unsupported audio track');
+          if (info.mime !== lane.mime && !lane.sb.changeType) throw new Error('Cannot change audio format dynamically');
+          lane.gen++;
+          ctl.current = i;
+          lane.track = aTracks[i];
+          lane.info = info;
+          await op(lane, async () => {
+            if (ms.readyState === 'closed') return;
+            lane.sb.remove(0, Infinity);
+            await idle(lane.sb);
+            if (ms.readyState === 'open') lane.sb.abort();
+            if (info.mime !== lane.mime) { lane.sb.changeType(info.mime); lane.mime = info.mime; }
+          });
+          lane.flush = true;
+          run('a', Math.max(0, video.currentTime));
+        },
+        destroy() {
+          destroyed = true;
+          clearInterval(watchdog);
+          clearTimeout(seekTimer);
+          video.removeEventListener('seeking', onSeek);
+          for (const k in lanes) lanes[k].gen++;
+          try { if (input) input.dispose(); } catch {}
+        }
+      };
+
+      function op(lane, fn) {
+        lane.chain = lane.chain.then(async () => {
+          if (destroyed || !ms || ms.readyState === 'closed') return;
+          await idle(lane.sb);
+          await fn();
+          await idle(lane.sb);
+        }).catch((e) => console.warn('SourceBuffer op error:', e));
+        return lane.chain;
+      }
+
+      function append(lane, data, myGen) {
+        lane.pending += data.byteLength;
+        return op(lane, async () => {
+          if (lane.gen !== myGen) { lane.pending -= data.byteLength; return; }
+          for (let tries = 0; ; tries++) {
+            try { lane.sb.appendBuffer(data); break; } catch (e) {
+              if (e.name !== 'QuotaExceededError' || tries > 4) { lane.pending -= data.byteLength; throw e; }
+              await sleep(500);
+            }
+          }
+          await idle(lane.sb);
+          lane.pending -= data.byteLength;
+          if (lane.flush && data.byteLength > 2000 && bufferedAhead(lane.sb, video.currentTime) > 0.5) {
+            lane.flush = false;
+            lane.noSeekUntil = Date.now() + 1500;
+            if (!video.paused) video.currentTime = video.currentTime;
+          }
+        });
+      }
+
+      const bufferedAhead = (sb, t) => {
+        try { const b = sb.buffered; for (let i = 0; i < b.length; i++) if (b.start(i) <= t + 0.3 && b.end(i) > t) return b.end(i) - t; } catch {}
+        return 0;
+      };
+
+      async function run(kind, t) {
+        const lane = lanes[kind];
+        if (!lane || destroyed) return;
+        const myGen = ++lane.gen;
+        lane.done = false;
+        lane.startedAt = Date.now();
+        lane.pos = t;
+        await op(lane, () => { if (ms.readyState === 'open') lane.sb.abort(); });
+        if (lane.gen !== myGen) return;
+        const track = lane.track;
+        const transcode = kind === 'a' && lane.info && lane.info.mode === 'transcode';
+        const fakes = new Set();
+        let timescale = 0;
+        const push = (d) => { if (lane.gen === myGen) append(lane, d.slice(), myGen); };
+
+        const out = new mb.Output({
+          format: new mb.Mp4OutputFormat({
+            fastStart: 'fragmented', minimumFragmentDuration: CUT,
+            onFtyp: push,
+            onMoov: (d) => { if (kind === 'v') timescale = moovTimescale(d); push(d); },
+            onMoof: (d) => {
+              if (lane.gen !== myGen) return;
+              const c = d.slice();
+              if (fakes.size && timescale) unflagFakeKey(c, timescale, fakes);
+              append(lane, c, myGen);
+            },
+            onMdat: push
+          }),
+          target: new mb.NullTarget()
+        });
+
+        const src = kind === 'v' ? new mb.EncodedVideoPacketSource(track.codec)
+          : transcode ? new mb.AudioSampleSource({ codec: lane.info.codec, bitrate: 160e3, transform: { numberOfChannels: 2, sampleRate: 48000 } })
+          : new mb.EncodedAudioPacketSource(track.codec);
+
+        if (kind === 'v') out.addVideoTrack(src); else out.addAudioTrack(src);
+
+        const wait = async (ts) => {
+          while (lane.gen === myGen && !destroyed && (ts > video.currentTime + AHEAD || lane.pending > 24e6)) await sleep(250);
+          return lane.gen === myGen && !destroyed;
+        };
+
+        try {
+          await out.start();
+          if (transcode) {
+            const from = Math.max(0, t - 0.2);
+            lane.pos = from;
+            for await (const s of new mb.AudioSampleSink(track).samples(from)) {
+              try {
+                if (!(await wait(s.timestamp))) break;
+                await src.add(s);
+                lane.pos = s.timestamp;
+              } finally { s.close(); }
+            }
+          } else {
+            const sink = new mb.EncodedPacketSink(track);
+            const first = t < 0.05 ? await sink.getFirstPacket() : kind === 'v'
+              ? (await sink.getKeyPacket(t)) || (await sink.getFirstPacket())
+              : (await sink.getPacket(Math.max(0, t - 0.2))) || (await sink.getFirstPacket());
+            const cfg = await track.getDecoderConfig();
+            lane.pos = first ? first.timestamp : t;
+            let isFirst = true, lastKey = -Infinity, maxTs = -Infinity;
+            for await (let p of sink.packets(first || undefined)) {
+              if (!(await wait(p.timestamp))) break;
+              if (kind === 'v') {
+                if (p.type === 'key') lastKey = p.timestamp;
+                else if (p.timestamp > maxTs && p.timestamp - lastKey >= CUT) {
+                  p = p.clone({ type: 'key' });
+                  fakes.add(Math.round(p.timestamp * 1000));
+                  lastKey = p.timestamp;
+                }
+                if (p.timestamp > maxTs) maxTs = p.timestamp;
+              }
+              await src.add(p, isFirst ? { decoderConfig: cfg } : undefined);
+              isFirst = false;
+              lane.pos = p.timestamp;
+            }
+          }
+          if (lane.gen === myGen && !destroyed) {
+            await out.finalize();
+            lane.done = true;
+            await lane.chain;
+            if (Object.values(lanes).every(l => l.done) && ms.readyState === 'open' && Object.values(lanes).every(l => !l.sb.updating)) {
+              try { ms.endOfStream(); } catch {}
+            }
+          } else await out.cancel().catch(() => {});
+        } catch (e) {
+          if (lane.gen === myGen && !destroyed) console.warn('Remux error:', kind, e);
+          try { await out.cancel(); } catch {}
+        }
+      }
+
+      function onSeek() {
+        clearTimeout(seekTimer);
+        seekTimer = setTimeout(doSeek, snapping ? 0 : 90);
+      }
+
+      async function doSeek() {
+        if (destroyed) return;
+        const now = video.currentTime;
+        for (const key in lanes) {
+          const lane = lanes[key];
+          if (bufferedAhead(lane.sb, now) >= 1) continue;
+          if (!lane.done && now >= lane.pos - 0.5 && now <= lane.pos + 4) continue;
+          run(key, now);
+        }
+      }
+
+      function tick() {
+        if (destroyed || !ms) return;
+        const t = video.currentTime;
+        for (const k in lanes) {
+          const lane = lanes[k];
+          const ahead = bufferedAhead(lane.sb, t);
+          if (ahead >= 3 || Date.now() - lane.startedAt < 3000) continue;
+          if (lane.done || lane.pos < t - 2 || lane.pos > t + AHEAD + 5) run(k, t + ahead);
+        }
+      }
+
+      (async () => {
+        mb = await loadMediabunny();
+        input = new mb.Input({ source: new mb.UrlSource(url), formats: mb.ALL_FORMATS });
+        ctl.input = input;
+        vTrack = await input.getPrimaryVideoTrack();
+        if (!vTrack) throw new Error('No video track found');
+        const vCodec = await vTrack.getCodecParameterString();
+        const vMime = 'video/mp4; codecs="' + vCodec + '"';
+        if (!isType(vMime)) throw new Error('Video codec not supported: ' + vCodec);
+
+        aTracks = await input.getAudioTracks();
+        const order = [];
+        if (opts.preferIdx != null && opts.preferIdx >= 0 && opts.preferIdx < aTracks.length) order.push(opts.preferIdx);
+        aTracks.forEach((_, i) => { if (!order.includes(i)) order.push(i); });
+        let aIdx = -1;
+        for (const i of order) { if ((await trackInfo(i)).mode) { aIdx = i; break; } }
+        Promise.all(aTracks.map((_, i) => trackInfo(i))).then(() => resolveInfo());
+        if (destroyed) return;
+
+        ms = new MSE();
+        if (managed) video.disableRemotePlayback = true;
+        const objUrl = URL.createObjectURL(ms);
+        video.src = objUrl;
+        await new Promise(r => ms.addEventListener('sourceopen', r, { once: true }));
+        URL.revokeObjectURL(objUrl);
+
+        let dur = null;
+        try { dur = await input.getDurationFromMetadata(); } catch {}
+        if (!dur) dur = await input.computeDuration().catch(() => null);
+        if (dur && isFinite(dur)) ms.duration = dur;
+
+        const lane = (sb, track, mime) => ({ sb, track, mime, gen: 0, chain: Promise.resolve(), pending: 0, pos: 0, done: false, startedAt: 0 });
+        lanes.v = lane(ms.addSourceBuffer(vMime), vTrack, vMime);
+        if (aIdx >= 0) {
+          lanes.a = lane(ms.addSourceBuffer(aInfo[aIdx].mime), aTracks[aIdx], aInfo[aIdx].mime);
+          lanes.a.info = aInfo[aIdx];
+          ctl.current = aIdx;
+        }
+        const t0 = opts.startAt > 0 && (!dur || opts.startAt < dur) ? opts.startAt : 0;
+        if (t0) video.currentTime = t0;
+        video.addEventListener('seeking', onSeek);
+        watchdog = setInterval(tick, 500);
+        for (const k in lanes) run(k, t0);
+        resolveReady();
+      })().catch(e => rejectReady(e));
+
+      return ctl;
+    }
+
     /* ==========================================================================
        8. AUDIO CONTEXT 400% VOLUME BOOST
        ========================================================================== */
     function setupVolumeBoost(video) {
-      const MAX_BOOST = 4;
-      let boost = 1, boostGraph = null;
-
-      function softClipCurve(range) {
-        const n = 16384, c = new Float32Array(n), T = 0.85;
-        for (let i = 0; i < n; i++) {
-          const s = ((i / (n - 1)) * 2 - 1) * range, a = Math.abs(s);
-          c[i] = Math.sign(s) * (a <= T ? a : T + (1 - T) * Math.tanh((a - T) / (1 - T)));
-        }
-        return c;
-      }
+      let boost = 1;
+      let actx = null;
+      let gainNode = null;
+      let compressor = null;
 
       function getGraph() {
-        if (boostGraph !== null) return boostGraph;
-        boostGraph = false;
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return false;
+        if (gainNode) return true;
         try {
-          const actx = new AC();
-          const src = actx.createMediaElementSource(video);
-          const level = actx.createDynamicsCompressor();
-          level.threshold.value = -24; level.knee.value = 12; level.ratio.value = 1;
-          const gain = actx.createGain();
-          const fit = actx.createGain();
-          fit.gain.value = 1 / MAX_BOOST;
-          const clip = actx.createWaveShaper();
-          clip.curve = softClipCurve(MAX_BOOST);
-          clip.oversample = '4x';
-          src.connect(level); level.connect(gain); gain.connect(fit); fit.connect(clip); clip.connect(actx.destination);
-          boostGraph = { ctx: actx, level, gain };
-          const wake = () => { if (actx.state !== 'running' && !video.paused) actx.resume().catch(() => {}); };
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return false;
+          if (!actx) actx = new AC();
+          if (!video._audioSourceNode) {
+            video._audioSourceNode = actx.createMediaElementSource(video);
+          }
+          gainNode = actx.createGain();
+          gainNode.gain.setValueAtTime(boost, actx.currentTime);
+
+          compressor = actx.createDynamicsCompressor();
+          compressor.threshold.setValueAtTime(-10, actx.currentTime);
+          compressor.knee.setValueAtTime(24, actx.currentTime);
+          compressor.ratio.setValueAtTime(10, actx.currentTime);
+          compressor.attack.setValueAtTime(0.003, actx.currentTime);
+          compressor.release.setValueAtTime(0.25, actx.currentTime);
+
+          video._audioSourceNode.connect(gainNode);
+          gainNode.connect(compressor);
+          compressor.connect(actx.destination);
+
+          const wake = () => { if (actx && actx.state !== 'running' && !video.paused) actx.resume().catch(() => {}); };
           video.addEventListener('play', wake);
+          return true;
         } catch (e) {
-          console.warn('Volume boost graph unavailable', e);
+          console.warn('Volume boost graph error:', e);
+          return false;
         }
-        return boostGraph;
       }
 
       return {
         setLevel(L, art, badge) {
-          L = Math.min(MAX_BOOST, Math.max(0, Math.round(L * 100) / 100));
+          L = Math.max(0, Math.min(4, Math.round(L * 100) / 100));
+          boost = L;
           if (L > 1) {
             art.volume = 1;
-            const g = getGraph();
-            if (g) {
-              boost = L;
-              g.level.ratio.value = L;
-              g.gain.gain.value = 1 + (L - 1) / 3;
-              if (g.ctx.state !== 'running') g.ctx.resume().catch(() => {});
+            if (getGraph()) {
+              if (actx && actx.state !== 'running') actx.resume().catch(() => {});
+              gainNode.gain.setValueAtTime(L, actx.currentTime);
             }
           } else {
-            boost = 1;
+            if (gainNode && actx) {
+              gainNode.gain.setValueAtTime(1, actx.currentTime);
+            }
             art.volume = L;
           }
           if (L > 0) art.muted = false;
@@ -1482,8 +1829,9 @@
           showToast('Volume ' + Math.round(L * 100) + '%');
         },
         step(dir, art, badge) {
-          const L = art.muted ? 0 : video.volume * boost;
-          this.setLevel(L + dir * ((dir > 0 ? L >= 1 : L > 1) ? 0.25 : 0.05), art, badge);
+          const current = (boost > 1) ? boost : (art.muted ? 0 : video.volume);
+          const next = dir > 0 ? (current >= 1 ? current + 0.5 : current + 0.1) : (current > 1 ? current - 0.5 : current - 0.1);
+          this.setLevel(next, art, badge);
         }
       };
     }
@@ -1525,6 +1873,11 @@
         hotkey: false,
         lock: true,
         fastForward: true,
+        moreVideoAttr: {
+          crossOrigin: 'anonymous',
+          'webkit-playsinline': 'true',
+          playsinline: 'true'
+        },
         controls: [
           {
             name: 'gd-audio',
@@ -1727,12 +2080,18 @@
         playerEl.classList.toggle('gd-narrow', w < 560);
         playerEl.classList.toggle('gd-tiny', w < 420);
       };
-      const fitObserver = new ResizeObserver(fitControls);
+      const fitObserver = new ResizeObserver(() => {
+        fitControls();
+        if (typeof currentAspect !== 'undefined' && currentAspect && currentAspect !== 'default') {
+          const found = aspectRatios.find(r => r.value === currentAspect);
+          if (found) selectAspectRatio(found);
+        }
+      });
       fitObserver.observe(playerEl);
       fitControls();
 
       /* ==========================================================================
-         10. CENTER 10s REWIND, CLAPPER PLAY, 10s FORWARD CONTROLS
+         10. CENTER 10s REWIND, PLAY/PAUSE, 10s FORWARD CONTROLS
          ========================================================================== */
       const centerOverlay = document.createElement('div');
       centerOverlay.className = 'gd-center-controls';
@@ -1742,7 +2101,7 @@
           <span class="center-btn-text">10</span>
         </button>
         <button class="center-btn center-clapper" title="Play / Pause (Space)">
-          ${SVG_ICONS.clapper}
+          ${SVG_ICONS.play}
         </button>
         <button class="center-btn seek-circle" title="Forward 10s (→)">
           ${SVG_ICONS.forward10}
@@ -1767,9 +2126,19 @@
         art.toggle();
       });
 
+      art.on('play', () => {
+        btnClapper.innerHTML = SVG_ICONS.pause;
+      });
+      art.on('pause', () => {
+        btnClapper.innerHTML = SVG_ICONS.play;
+      });
+
       /* ==========================================================================
          11. TRACK PARSING & INITIALIZATION
          ========================================================================== */
+      let remux = null;
+      let audioChain = Promise.resolve();
+
       (async () => {
         try {
           if (isMatroska) {
@@ -1856,21 +2225,49 @@
          ========================================================================== */
       function selectAspectRatio(ratio) {
         currentAspect = ratio.value;
+        closeMenu();
+
+        video.style.transition = 'all 0.25s ease';
+
         if (ratio.value === 'default') {
-          art.aspectRatio = 'default';
+          video.style.width = '100%';
+          video.style.height = '100%';
           video.style.objectFit = 'contain';
+          video.style.aspectRatio = 'unset';
+          video.style.margin = 'auto';
         } else if (ratio.value === 'stretch') {
-          art.aspectRatio = 'default';
+          video.style.width = '100%';
+          video.style.height = '100%';
           video.style.objectFit = 'fill';
+          video.style.aspectRatio = 'unset';
+          video.style.margin = 'auto';
         } else if (ratio.value === 'crop') {
-          art.aspectRatio = 'default';
+          video.style.width = '100%';
+          video.style.height = '100%';
           video.style.objectFit = 'cover';
+          video.style.aspectRatio = 'unset';
+          video.style.margin = 'auto';
         } else {
-          video.style.objectFit = 'contain';
-          art.aspectRatio = ratio.value;
+          const parts = ratio.value.split(':').map(Number);
+          if (parts.length === 2 && parts[0] && parts[1]) {
+            const targetRatio = parts[0] / parts[1];
+            const containerW = playerEl.clientWidth;
+            const containerH = playerEl.clientHeight;
+            const containerRatio = containerW / containerH;
+
+            video.style.objectFit = 'fill';
+            video.style.aspectRatio = `${parts[0]} / ${parts[1]}`;
+            if (targetRatio >= containerRatio) {
+              video.style.width = '100%';
+              video.style.height = (containerW / targetRatio) + 'px';
+            } else {
+              video.style.height = '100%';
+              video.style.width = (containerH * targetRatio) + 'px';
+            }
+            video.style.margin = 'auto';
+          }
         }
         showToast(`Aspect Ratio: ${ratio.label}`);
-        closeMenu();
       }
 
       /* ==========================================================================
@@ -1962,13 +2359,39 @@
       }
 
       function selectAudio(idx) {
-        audioCur = idx;
+        if (idx === audioCur || !audioItems[idx]) return;
         const it = audioItems[idx];
-        showToast(`Audio: ${it.label}`);
-        const at = video.audioTracks;
-        if (at && at.length > 0) {
-          for (let k = 0; k < at.length; k++) at[k].enabled = (k === idx);
-        }
+        showToast(`Switching audio: ${it.label}...`);
+
+        audioChain = audioChain.catch(() => {}).then(async () => {
+          const at = video.audioTracks;
+          if (remux) {
+            await remux.ready;
+            await remux.switchTo(idx);
+          } else if (at && at.length === audioItems.length) {
+            for (let k = 0; k < at.length; k++) at[k].enabled = (k === idx);
+            if (!video.paused) video.currentTime = video.currentTime;
+          } else if (MSE) {
+            await toRemux(idx);
+          } else {
+            showToast('Audio track switching not supported in this browser');
+          }
+          audioCur = remux ? remux.current : idx;
+          showToast(`Active Audio: ${audioItems[audioCur].label}`);
+          refreshControlButtons();
+        }).catch((e) => {
+          console.warn('Audio switch error:', e);
+          showToast('Could not switch audio: ' + e.message);
+        });
+      }
+
+      async function toRemux(idx) {
+        const at = video.currentTime;
+        const playing = !video.paused;
+        const r = createRemux(video, FILE_URL, { startAt: at, preferIdx: idx });
+        remux = r;
+        await r.ready;
+        if (playing) video.play().catch(() => {});
       }
 
       function selectSub(idx) {
