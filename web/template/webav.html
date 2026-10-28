@@ -11,7 +11,7 @@
 
   <!-- External CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
   <!-- Import map for Mediabunny (in-browser audio decoders & demuxer) -->
@@ -34,7 +34,7 @@
       --text: #f0f2f5;
       --muted: #9ba3af;
       --dim: #6b7280;
-      --sans: 'Poppins', 'Geist', system-ui, -apple-system, sans-serif;
+      --sans: 'Nunito', 'Poppins', 'Geist', system-ui, -apple-system, sans-serif;
       --mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
     }
 
@@ -121,8 +121,9 @@
       pointer-events: none;
       z-index: 25;
       --sub-base: 22px;
-      --sub-scale: 1;
-      --sub-font: 'Geist', Arial, sans-serif;
+      --sub-scale: 0.75;
+      --sub-font: 'Nunito', Arial, sans-serif;
+      --sub-color: #ffffff;
     }
     .gd-sub .bot,
     .gd-sub .topc {
@@ -148,13 +149,129 @@
     .gd-sub span {
       display: inline-block;
       font: 600 calc(var(--sub-base) * var(--sub-scale)) / 1.25 var(--sub-font);
-      color: #fff;
+      color: var(--sub-color, #ffffff);
       padding: 0.12em 0.45em;
       border-radius: 0.25em;
       white-space: pre-wrap;
       text-shadow: 0 0 3px #000, 0 1px 4px #000, 0 2px 6px #000;
       background: rgba(0, 0, 0, var(--sub-bg, 0.55));
       max-width: 100%;
+    }
+
+    /* Center Overlay Controls (Rewind 10s, Clapperboard Play, Forward 10s) */
+    .gd-center-controls {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 34px;
+      z-index: 28;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.22s ease;
+    }
+
+    .art-video-player:hover .gd-center-controls,
+    .art-video-player.art-control-show .gd-center-controls,
+    .art-video-player.art-state-pause .gd-center-controls {
+      opacity: 1;
+    }
+
+    .center-btn {
+      pointer-events: auto;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 0.15s ease, background 0.15s ease;
+      user-select: none;
+    }
+    .center-btn:hover {
+      transform: scale(1.1);
+    }
+    .center-btn:active {
+      transform: scale(0.94);
+    }
+
+    .center-btn.seek-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(18, 22, 34, 0.78);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+    }
+    .center-btn.seek-circle svg {
+      width: 28px;
+      height: 28px;
+    }
+    .center-btn-text {
+      position: absolute;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 800;
+      top: 53%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ffffff;
+      pointer-events: none;
+    }
+
+    .center-btn.center-clapper {
+      width: 66px;
+      height: 66px;
+      border-radius: 18px;
+      background: rgba(28, 33, 48, 0.84);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #ffffff;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+    }
+    .center-btn.center-clapper svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    /* Artplayer Settings Panel Customizations */
+    .art-settings {
+      background: rgba(16, 18, 26, 0.96) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.16) !important;
+      border-radius: 14px !important;
+      padding: 6px 4px !important;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75) !important;
+      color: #fff !important;
+    }
+    .art-setting-item {
+      padding: 9px 12px !important;
+      border-radius: 8px !important;
+      font-size: 13.5px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+    }
+    .art-setting-item:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+    }
+    .art-setting-item .gd-set-icon {
+      width: 17px;
+      height: 17px;
+      margin-right: 10px;
+      vertical-align: -3px;
+      fill: currentColor;
+      opacity: 0.85;
     }
 
     /* Pop-up Menus (Audio & Subtitles) */
@@ -421,6 +538,9 @@
       #artplayer-container {
         aspect-ratio: 16 / 9;
       }
+      .gd-center-controls {
+        gap: 20px;
+      }
     }
   </style>
 </head>
@@ -431,7 +551,10 @@
     <!-- Header -->
     <header class="py-2 shadow" style="background-color: {{ colours.header.background }} !important; color: {{ colours.header.color }} !important;">
       <div class="d-flex justify-content-between align-items-center container">
-        <h1 class="h4 mb-0 fw-bold d-flex align-items-center"><img src="https://files.catbox.moe/4cxrp6.png" alt="Logo" width="30" height="30" class="rounded-circle me-2" style="object-fit: cover;">{{template_ne}}</h1>
+        <h1 class="h4 mb-0 fw-bold d-flex align-items-center">
+          <img src="https://files.catbox.moe/4cxrp6.png" alt="Logo" width="30" height="30" class="rounded-circle me-2" style="object-fit: cover;">
+          {{template_ne}}
+        </h1>
         <button id="theme-toggle-btn" class="btn btn-light btn-sm theme-toggle-btn" onclick="toggleTheme()">
           <i class="fa-solid fa-sun me-1"></i> <span id="theme-text">Light Mode</span>
         </button>
@@ -528,6 +651,9 @@
   <!-- Toast Notification Host -->
   <div id="toast-host" class="toast-host"></div>
 
+  <!-- Hidden Subtitle File Input for 'Add Subtitles' -->
+  <input type="file" id="sub-file-input" accept=".srt,.vtt,.ass,.ssa,.sub,.txt" style="display:none;" />
+
   <!-- Artplayer Core Script -->
   <script src="https://cdn.jsdelivr.net/npm/artplayer@5.4.0/dist/artplayer.js"></script>
 
@@ -569,6 +695,18 @@
       check: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>',
       fsOn: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
       fsOff: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
+      rewind10: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.2 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.91 11.08 17.07 8 12.5 8z"/></svg>',
+      forward10: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M11.5 8c2.65 0 5.05.99 6.9 2.6L22 7v9h-9l3.62-3.62c-1.39-1.2-3.16-1.88-5.12-1.88-3.54 0-6.55 2.31-7.6 5.5l-2.37-.78C3.09 11.08 6.93 8 11.5 8z"/></svg>',
+      clapper: '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>',
+      aspectRatio: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/></svg>',
+      addSub: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/></svg>',
+      volBoost: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>',
+      subSize: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z"/></svg>',
+      subFont: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M9.93 13.5h4.14L12 7.98zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5l-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z"/></svg>',
+      subColor: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.27 19.59 10.59 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>',
+      subBg: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>',
+      subDelay: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>',
+      pip: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/></svg>',
     };
 
     function showToast(msg, duration = 2500) {
@@ -635,11 +773,11 @@
     })[c] || String(c || '').replace(/^S_(TEXT\/)?/, '');
 
     const SUB_FONTS = [
+      { id: 'nunito', name: 'Nunito', css: "'Nunito', sans-serif" },
       { id: 'geist', name: 'Geist (default)', css: "'Geist', Arial, sans-serif" },
       { id: 'arial', name: 'Arial', css: "Arial, 'Helvetica Neue', Helvetica, sans-serif" },
-      { id: 'nunito', name: 'Nunito', css: 'Nunito, Arial, sans-serif', gf: 'Nunito:wght@400;600;700' },
       { id: 'comic', name: 'Comic Sans', css: "'Comic Sans MS', cursive" },
-      { id: 'roboto', name: 'Roboto', css: 'Roboto, Arial, sans-serif', gf: 'Roboto:wght@400;500;700' },
+      { id: 'roboto', name: 'Roboto', css: "Roboto, Arial, sans-serif" },
     ];
     function subFont(id) { return SUB_FONTS.find(f => f.id === id) || SUB_FONTS[0]; }
 
@@ -798,7 +936,7 @@
     }
 
     /* ==========================================================================
-       5. SUBTITLES ENGINE (EMBEDDED CUES + TIMING)
+       5. SUBTITLES ENGINE & PARSERS
        ========================================================================== */
     function createSubtitleLayer(art, playerContainer) {
       const layer = document.createElement('div');
@@ -829,6 +967,7 @@
         setScale(v) { store.set('subScale', v); layer.style.setProperty('--sub-scale', v); },
         setBg(on) { store.set('subBg', on); layer.style.setProperty('--sub-bg', on ? '0.55' : '0'); },
         setFont(id) { const f = subFont(id); store.set('subFont', f.id); layer.style.setProperty('--sub-font', f.css); },
+        setColor(hex) { store.set('subColor', hex); layer.style.setProperty('--sub-color', hex); },
         destroy() {
           alive = false;
           cancelAnimationFrame(raf);
@@ -838,9 +977,10 @@
         }
       };
 
-      api.setScale(store.get('subScale', 1));
+      api.setScale(store.get('subScale', 0.75));
       api.setBg(store.get('subBg', true));
-      api.setFont(store.get('subFont', 'geist'));
+      api.setFont(store.get('subFont', 'nunito'));
+      api.setColor(store.get('subColor', '#ffffff'));
 
       function render() {
         if (!alive) return;
@@ -890,12 +1030,51 @@
       return out;
     }
 
+    function parseStamp(s) {
+      const m = String(s).trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:[.,](\d{1,3}))?$/);
+      if (!m) return null;
+      return (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) + (m[4] ? +(m[4] + '00').slice(0, 3) / 1000 : 0);
+    }
+
+    function parseSrtVtt(raw) {
+      const out = [];
+      const blocks = raw.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').split(/\n{2,}/);
+      for (const b of blocks) {
+        const lines = b.split('\n');
+        const i = lines.findIndex(l => l.includes('-->'));
+        if (i < 0) continue;
+        const [a, z] = lines[i].split('-->');
+        const s = parseStamp(a), e = parseStamp((z || '').trim().split(/\s+/)[0]);
+        if (s == null || e == null) continue;
+        const c = makeCue(s, e, lines.slice(i + 1).join('\n'));
+        if (c) out.push(c);
+      }
+      return out;
+    }
+
+    function parseAssFile(raw) {
+      const out = [];
+      let fmt = null;
+      for (const line of raw.replace(/\r\n?/g, '\n').split('\n')) {
+        if (/^Format:/i.test(line) && fmt === null && /Start/i.test(line) && /Text/i.test(line)) {
+          fmt = line.slice(7).split(',').map(s => s.trim().toLowerCase());
+        } else if (/^Dialogue:/i.test(line) && fmt) {
+          const parts = line.slice(9).split(',');
+          const textIdx = fmt.indexOf('text');
+          const rec = parts.slice(0, textIdx).map(s => s.trim());
+          const txt = parts.slice(textIdx).join(',');
+          const s = parseStamp(rec[fmt.indexOf('start')]), e = parseStamp(rec[fmt.indexOf('end')]);
+          if (s == null || e == null) continue;
+          const c = makeCue(s, e, txt);
+          if (c) out.push(c);
+        }
+      }
+      return out.sort((a, b) => a.start - b.start);
+    }
+
     function embeddedSource(info, track, url) {
       const cues = [];
       let dead = false, lastT = 0;
-
-      function addCue(start, end, raw) { const c = makeCue(start, end, raw); if (c) insertCue(cues, c); }
-
       return {
         tick(now) { lastT = now; },
         active: (t) => activeCues(cues, t),
@@ -904,7 +1083,7 @@
     }
 
     /* ==========================================================================
-       6. AUDIO REMUXER / TRANSDCODER (MEDIABUNNY & MSE)
+       6. AUDIO REMUXER & WASM DECORDER
        ========================================================================== */
     const decoderPlugins = {};
     function ensureDecoder(codec) {
@@ -913,48 +1092,6 @@
       return decoderPlugins[lib] || (decoderPlugins[lib] = import(LIBS[lib]).then(m => {
         if (lib === 'ac3') m.registerAc3Decoder(); else m.registerDtsDecoder();
       }).catch(e => { delete decoderPlugins[lib]; throw e; }));
-    }
-
-    function createRemux(video, url, opts) {
-      const managed = !!window.ManagedMediaSource && MSE === window.ManagedMediaSource;
-      let mb, input, vTrack, aTracks = [], ms = null, destroyed = false;
-      const lanes = {};
-      let resolveReady, rejectReady, resolveInfo;
-      const ready = new Promise((res, rej) => { resolveReady = res; rejectReady = rej; });
-      const infoReady = new Promise(res => { resolveInfo = res; });
-      ready.catch(() => resolveInfo());
-
-      const ctl = {
-        ready, infoReady, current: -1,
-        supports: (i) => true,
-        why: () => 'Not supported',
-        async switchTo(i) {
-          ctl.current = i;
-          showToast(`Switched audio track`);
-        },
-        destroy() {
-          destroyed = true;
-          try { if (input) input.dispose(); } catch {}
-        }
-      };
-
-      (async () => {
-        try {
-          mb = await loadMediabunny();
-          input = new mb.Input({
-            source: new mb.UrlSource(url, { maxCacheSize: 32 * 1024 * 1024 }),
-            formats: mb.ALL_FORMATS
-          });
-          vTrack = await input.getPrimaryVideoTrack();
-          aTracks = await input.getAudioTracks();
-          resolveInfo();
-          resolveReady();
-        } catch (e) {
-          rejectReady(e);
-        }
-      })();
-
-      return ctl;
     }
 
     /* ==========================================================================
@@ -1060,25 +1197,25 @@
         playsInline: true,
         autoPlayback: false,
         airplay: true,
-        hotkey: false, // Custom hotkey handler handles 400% volume & track switching
+        hotkey: false,
         lock: true,
         fastForward: true,
         controls: [
           {
-            name: 'gd-audio',
-            position: 'right',
-            index: 1,
-            html: '<i class="gd-ico">' + SVG_ICONS.headphones + '</i>',
-            tooltip: 'Audio Track (A)',
-            click: () => toggleMenu('audio')
-          },
-          {
             name: 'gd-subs',
             position: 'right',
-            index: 2,
+            index: 1,
             html: '<i class="gd-ico">' + SVG_ICONS.sub + '</i>',
             tooltip: 'Subtitles (C)',
             click: () => toggleMenu('subs')
+          },
+          {
+            name: 'gd-audio',
+            position: 'right',
+            index: 2,
+            html: '<i class="gd-ico">' + SVG_ICONS.headphones + '</i>',
+            tooltip: 'Audio Track (A)',
+            click: () => toggleMenu('audio')
           },
           IS_TOUCH ? {
             name: 'gd-rotate',
@@ -1091,8 +1228,44 @@
         ].filter(Boolean),
         settings: [
           {
+            name: 'aspect-ratio',
+            html: SVG_ICONS.aspectRatio + ' Aspect Ratio',
+            tooltip: 'Default',
+            selector: [
+              { html: 'Default', value: 'default', default: true },
+              { html: '16:9', value: '16:9' },
+              { html: '4:3', value: '4:3' },
+              { html: 'Fill / Cover', value: 'cover' },
+              { html: 'Stretch', value: 'fill' }
+            ],
+            onSelect(item) {
+              if (item.value === 'default') {
+                art.aspectRatio = 'default';
+                video.style.objectFit = '';
+              } else if (item.value === 'cover') {
+                art.aspectRatio = 'default';
+                video.style.objectFit = 'cover';
+              } else if (item.value === 'fill') {
+                art.aspectRatio = 'default';
+                video.style.objectFit = 'fill';
+              } else {
+                video.style.objectFit = '';
+                art.aspectRatio = item.value;
+              }
+              return item.html;
+            }
+          },
+          {
+            name: 'add-subtitles',
+            html: SVG_ICONS.addSub + ' Add subtitles',
+            tooltip: 'Site or device',
+            click() {
+              triggerSubtitleUpload();
+            }
+          },
+          {
             name: 'gd-boost',
-            html: 'Volume Boost',
+            html: SVG_ICONS.volBoost + ' Volume boost',
             tooltip: '100%',
             selector: [1, 1.5, 2, 3, 4].map(v => ({ html: v === 1 ? 'Off (100%)' : Math.round(v * 100) + '%', value: v, default: v === 1 })),
             onSelect(item) {
@@ -1102,17 +1275,55 @@
           },
           {
             name: 'gd-subsize',
-            html: 'Subtitle Size',
-            tooltip: 'Normal',
-            selector: [0.75, 1, 1.25, 1.5, 2].map(v => ({ html: v === 1 ? 'Normal' : Math.round(v * 100) + '%', value: v, default: v === 1 })),
+            html: SVG_ICONS.subSize + ' Subtitle size',
+            tooltip: '75%',
+            selector: [
+              { html: '50%', value: 0.5 },
+              { html: '75%', value: 0.75, default: true },
+              { html: 'Normal (100%)', value: 1 },
+              { html: '125%', value: 1.25 },
+              { html: '150%', value: 1.5 },
+              { html: '200%', value: 2 }
+            ],
             onSelect(item) {
               subs.setScale(item.value);
               return item.html;
             }
           },
           {
+            name: 'gd-subfont',
+            html: SVG_ICONS.subFont + ' Subtitle font',
+            tooltip: 'Nunito',
+            selector: SUB_FONTS.map(f => ({
+              html: `<span style="font-family:${f.css}">${f.name}</span>`,
+              value: f.id,
+              default: f.id === 'nunito'
+            })),
+            onSelect(item) {
+              const f = subFont(item.value);
+              subs.setFont(f.id);
+              return f.name;
+            }
+          },
+          {
+            name: 'gd-subcolor',
+            html: SVG_ICONS.subColor + ' Subtitle colour',
+            tooltip: 'White',
+            selector: [
+              { html: '<span style="color:#ffffff">White</span>', value: '#ffffff', default: true },
+              { html: '<span style="color:#ffeb3b">Yellow</span>', value: '#ffeb3b' },
+              { html: '<span style="color:#00ffff">Cyan</span>', value: '#00ffff' },
+              { html: '<span style="color:#69f0ae">Green</span>', value: '#69f0ae' },
+              { html: '<span style="color:#ff5252">Red</span>', value: '#ff5252' }
+            ],
+            onSelect(item) {
+              subs.setColor(item.value);
+              return item.html.replace(/<[^>]*>/g, '');
+            }
+          },
+          {
             name: 'gd-subbg',
-            html: 'Subtitle Background',
+            html: SVG_ICONS.subBg + ' Subtitle background',
             switch: store.get('subBg', true),
             onSwitch(item) {
               const v = !item.switch;
@@ -1122,12 +1333,21 @@
           },
           {
             name: 'gd-subdelay',
-            html: 'Subtitle Delay',
+            html: SVG_ICONS.subDelay + ' Subtitle delay',
             tooltip: '0.0s',
             range: [0, -10, 10, 0.1],
             onChange(item) {
               subs.delay = Number(item.range[0]) || 0;
               return subs.delay.toFixed(1) + 's';
+            }
+          },
+          {
+            name: 'gd-pip',
+            html: SVG_ICONS.pip + ' Picture-in-picture',
+            switch: false,
+            onSwitch(item) {
+              try { art.pip = !art.pip; } catch {}
+              return !item.switch;
             }
           }
         ]
@@ -1156,7 +1376,43 @@
       fitControls();
 
       /* ==========================================================================
-         9. TRACK PARSING & INITIALIZATION
+         9. CENTER 10s REWIND, CLAPPER PLAY, 10s FORWARD CONTROLS
+         ========================================================================== */
+      const centerOverlay = document.createElement('div');
+      centerOverlay.className = 'gd-center-controls';
+      centerOverlay.innerHTML = `
+        <button class="center-btn seek-circle" title="Rewind 10s (←)">
+          ${SVG_ICONS.rewind10}
+          <span class="center-btn-text">10</span>
+        </button>
+        <button class="center-btn center-clapper" title="Play / Pause (Space)">
+          ${SVG_ICONS.clapper}
+        </button>
+        <button class="center-btn seek-circle" title="Forward 10s (→)">
+          ${SVG_ICONS.forward10}
+          <span class="center-btn-text">10</span>
+        </button>
+      `;
+      playerEl.appendChild(centerOverlay);
+
+      const [btnRewind, btnClapper, btnForward] = centerOverlay.querySelectorAll('.center-btn');
+      btnRewind.addEventListener('click', (e) => {
+        e.stopPropagation();
+        art.seek = Math.max(0, video.currentTime - 10);
+        showToast('⏪ −10s');
+      });
+      btnForward.addEventListener('click', (e) => {
+        e.stopPropagation();
+        art.seek = Math.min(video.duration || Infinity, video.currentTime + 10);
+        showToast('⏩ +10s');
+      });
+      btnClapper.addEventListener('click', (e) => {
+        e.stopPropagation();
+        art.toggle();
+      });
+
+      /* ==========================================================================
+         10. TRACK PARSING & INITIALIZATION
          ========================================================================== */
       (async () => {
         try {
@@ -1179,7 +1435,6 @@
               disabledReason: 'Image subtitles (PGS/VobSub) can only be viewed in external players like VLC or MX Player.'
             }));
           } else {
-            // MP4 track inspection via Mediabunny
             const mb = await loadMediabunny();
             const input = new mb.Input({ source: new mb.UrlSource(FILE_URL), formats: mb.ALL_FORMATS });
             const list = await input.getAudioTracks();
@@ -1203,7 +1458,45 @@
       }
 
       /* ==========================================================================
-         10. MENUS & SELECTIONS
+         11. SUBTITLE FILE UPLOAD ("Add subtitles -> Site or device")
+         ========================================================================== */
+      const fileInput = document.getElementById('sub-file-input');
+      function triggerSubtitleUpload() {
+        if (!fileInput) return;
+        fileInput.value = '';
+        fileInput.click();
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const text = evt.target.result;
+            const parsed = (file.name.endsWith('.ass') || file.name.endsWith('.ssa'))
+              ? parseAssFile(text)
+              : parseSrtVtt(text);
+            const source = {
+              active: (t) => activeCues(parsed, t),
+              destroy() {}
+            };
+            subs.setSource(source);
+            subItems.unshift({
+              label: file.name,
+              sub: 'Loaded from Device',
+              tag: 'FILE'
+            });
+            currentSub = 0;
+            refreshControlButtons();
+            showToast(`Loaded subtitles: ${file.name}`);
+          };
+          reader.readAsText(file);
+        });
+      }
+
+      /* ==========================================================================
+         12. MENUS & SELECTIONS
          ========================================================================== */
       function closeMenu() {
         if (menuEl) { menuEl.remove(); menuEl = null; }
@@ -1270,7 +1563,6 @@
         audioCur = idx;
         const it = audioItems[idx];
         showToast(`Audio: ${it.label}`);
-        // HTML5 native track switching if supported by browser
         const at = video.audioTracks;
         if (at && at.length > 0) {
           for (let k = 0; k < at.length; k++) at[k].enabled = (k === idx);
@@ -1293,12 +1585,12 @@
       }
 
       /* ==========================================================================
-         11. TOUCH GESTURES (DOUBLE TAP SEEK & ROTATE)
+         13. TOUCH GESTURES (DOUBLE TAP SEEK & ROTATE)
          ========================================================================== */
       if (IS_TOUCH) {
         let lastTap = 0, lastZone = 0, streak = 0, ripple = null;
         playerEl.addEventListener('click', (e) => {
-          if (e.target.closest('.art-bottom, .art-settings, .gd-menu, .help')) return;
+          if (e.target.closest('.art-bottom, .art-settings, .gd-menu, .help, .gd-center-controls')) return;
           const r = playerEl.getBoundingClientRect();
           const x = (e.clientX - r.left) / r.width;
           const zone = x < 0.35 ? -1 : x > 0.65 ? 1 : 0;
@@ -1337,7 +1629,7 @@
       }
 
       /* ==========================================================================
-         12. KEYBOARD SHORTCUTS
+         14. KEYBOARD SHORTCUTS
          ========================================================================== */
       document.addEventListener('keydown', (e) => {
         if (e.target.matches('input, textarea, select')) return;
@@ -1478,7 +1770,7 @@
     });
 
     /* ==========================================================================
-       13. EXTERNAL PLAYER LAUNCHERS & ACTIONS
+       15. EXTERNAL PLAYER LAUNCHERS & ACTIONS
        ========================================================================== */
     function mx_player() {
       const streamUrl = FILE_URL;
@@ -1496,7 +1788,6 @@
       } else if (IS_IOS) {
         window.location.href = `vlc-x-callback://x-callback-url/stream?url=${encodeURIComponent(streamUrl)}`;
       } else {
-        // Desktop VLC via M3U playlist download
         const blob = new Blob([`#EXTM3U\n#EXTINF:-1,${FILE_NAME}\n${streamUrl}\n`], { type: 'audio/x-mpegurl' });
         const u = URL.createObjectURL(blob);
         const a = document.createElement('a');
