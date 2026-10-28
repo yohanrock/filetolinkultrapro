@@ -118,8 +118,10 @@
       --art-control-icon-size: 28px;
     }
 
-    .art-video-player.gd-tiny .art-control-pip,
-    .art-video-player.gd-tiny .art-control-fullscreen-web {
+    .art-control-fullscreen-web {
+      display: none !important;
+    }
+    .art-video-player.gd-tiny .art-control-pip {
       display: none !important;
     }
 
@@ -196,49 +198,104 @@
       justify-content: center;
       gap: 32px;
       z-index: 28;
-      pointer-events: none;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.25s ease, visibility 0.25s ease;
-    }
-
-    /* Controls visibility: hide when playing; reveal on cursor move or click */
-    .art-video-player.art-control-show .gd-center-controls,
-    .art-video-player.art-state-pause .gd-center-controls {
+      pointer-events: auto;
       opacity: 1;
       visibility: visible;
-      pointer-events: auto;
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
     }
-    .art-video-player.art-state-play:not(.art-control-show) .gd-center-controls,
-    .art-video-player.art-hide-cursor .gd-center-controls {
+
+    /* Auto-hide: hide player bar, top, and center controls when idle/hidden */
+    .art-video-player.gd-idle-hidden .art-bottom,
+    .art-video-player.gd-idle-hidden .art-top,
+    .art-video-player.gd-idle-hidden .gd-center-controls,
+    .art-video-player.art-hide-cursor .art-bottom,
+    .art-video-player.art-hide-cursor .art-top,
+    .art-video-player.art-hide-cursor .gd-center-controls,
+    .art-video-player.art-state-play:not(.art-control-show) .art-bottom,
+    .art-video-player.art-state-play:not(.art-control-show) .art-top,
+    .art-video-player.art-state-play:not(.art-control-show) .gd-center-controls {
       opacity: 0 !important;
       visibility: hidden !important;
       pointer-events: none !important;
+      transform: translateY(12px) !important;
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease !important;
     }
 
-    .art-video-player.art-state-play:not(.art-control-show) .art-bottom,
-    .art-video-player.art-state-play:not(.art-control-show) .art-top,
-    .art-video-player.art-hide-cursor .art-bottom,
-    .art-video-player.art-hide-cursor .art-top {
-      opacity: 0 !important;
-      pointer-events: none !important;
-      transform: translateY(6px) !important;
-      transition: opacity 0.3s ease, transform 0.3s ease !important;
+    .art-video-player.gd-idle-hidden .gd-center-controls,
+    .art-video-player.art-hide-cursor .gd-center-controls,
+    .art-video-player.art-state-play:not(.art-control-show) .gd-center-controls {
+      transform: translate(-50%, -50%) scale(0.92) !important;
     }
 
-    .art-video-player.art-control-show .art-bottom,
-    .art-video-player.art-control-show .art-top,
+    /* When controls are active or player is paused: show bottom bar, top, and center buttons */
+    .art-video-player.art-control-show:not(.gd-idle-hidden) .art-bottom,
+    .art-video-player.art-control-show:not(.gd-idle-hidden) .art-top,
     .art-video-player.art-state-pause .art-bottom,
     .art-video-player.art-state-pause .art-top {
       opacity: 1 !important;
+      visibility: visible !important;
       pointer-events: auto !important;
       transform: translateY(0) !important;
-      transition: opacity 0.3s ease, transform 0.3s ease !important;
+      transition: opacity 0.25s ease, transform 0.25s ease !important;
     }
 
+    .art-video-player.art-control-show:not(.gd-idle-hidden) .gd-center-controls,
+    .art-video-player.art-state-pause .gd-center-controls,
+    .art-video-player:not(.art-state-play) .gd-center-controls {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      transform: translate(-50%, -50%) scale(1) !important;
+      transition: opacity 0.25s ease, transform 0.25s ease !important;
+    }
+
+    /* Hide cursor completely when idle/hidden */
+    .art-video-player.gd-idle-hidden,
+    .art-video-player.gd-idle-hidden *,
     .art-video-player.art-hide-cursor,
     .art-video-player.art-hide-cursor * {
       cursor: none !important;
+    }
+
+    /* Scrubber Video Preview Tooltip */
+    .gd-timeline-preview {
+      position: absolute;
+      bottom: 58px;
+      transform: translateX(-50%);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      z-index: 99;
+      pointer-events: none;
+      animation: gdFadeIn 0.15s ease;
+    }
+    .gd-preview-box {
+      width: 154px;
+      height: 86px;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+      position: relative;
+    }
+    .gd-preview-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .gd-preview-time {
+      margin-top: 5px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(14, 16, 24, 0.92);
+      padding: 2px 8px;
+      border-radius: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      letter-spacing: 0.5px;
     }
 
     /* Hide redundant internal Artplayer center state icon */
@@ -1455,9 +1512,99 @@
 
     function embeddedSource(info, track, url) {
       const cues = [];
-      let dead = false, lastT = 0;
+      let dead = false;
+      const trackNum = track.number;
+      const tsSec = info.tsSec || 0.001;
+
+      (async () => {
+        try {
+          const startPos = info.firstCluster;
+          if (!startPos) return;
+
+          let offset = startPos;
+          const chunkSize = 1024 * 1024 * 2; // 2MB
+          const maxScan = 35 * 1024 * 1024; // Scan up to 35MB of stream
+          let scanned = 0;
+
+          while (!dead && scanned < maxScan) {
+            const buf = await fetchRange(url, offset, offset + chunkSize - 1).catch(() => null);
+            if (!buf || buf.length === 0) break;
+
+            let p = 0;
+            let curClusterTs = 0;
+
+            while (p + 4 < buf.length && !dead) {
+              const el = hdr(buf, p);
+              if (!el) { p++; continue; }
+
+              if (el.id === ID.Cluster) {
+                const cEnd = Math.min(el.end, buf.length);
+                let cp = el.data;
+                while (cp + 4 < cEnd && !dead) {
+                  const ch = hdr(buf, cp);
+                  if (!ch) { cp++; continue; }
+
+                  if (ch.id === ID.Timestamp) {
+                    curClusterTs = uint(buf, ch.data, ch.size);
+                  } else if (ch.id === ID.SimpleBlock || ch.id === ID.Block) {
+                    const bt = readVint(buf, ch.data);
+                    if (bt && bt.v === trackNum) {
+                      const relOff = ch.data + bt.len;
+                      const relTime = (buf[relOff] << 8) | buf[relOff + 1];
+                      const sRelTime = relTime > 32767 ? relTime - 65536 : relTime;
+                      const sTime = (curClusterTs + sRelTime) * tsSec;
+                      const txtStart = relOff + 3;
+                      const txtEnd = ch.end;
+                      if (txtEnd > txtStart && txtEnd <= buf.length) {
+                        const raw = str(buf, txtStart, txtEnd - txtStart);
+                        const c = makeCue(sTime, sTime + 3.5, raw);
+                        if (c) insertCue(cues, c);
+                      }
+                    }
+                  } else if (ch.id === ID.BlockGroup) {
+                    let bp = ch.data;
+                    let dur = 3.5;
+                    const bgEnd = Math.min(ch.end, buf.length);
+                    while (bp + 4 < bgEnd && !dead) {
+                      const bch = hdr(buf, bp);
+                      if (!bch) { bp++; continue; }
+                      if (bch.id === ID.BlockDuration) {
+                        dur = (uint(buf, bch.data, bch.size) || 3500) * tsSec;
+                      } else if (bch.id === ID.Block) {
+                        const bt = readVint(buf, bch.data);
+                        if (bt && bt.v === trackNum) {
+                          const relOff = bch.data + bt.len;
+                          const relTime = (buf[relOff] << 8) | buf[relOff + 1];
+                          const sRelTime = relTime > 32767 ? relTime - 65536 : relTime;
+                          const sTime = (curClusterTs + sRelTime) * tsSec;
+                          const txtStart = relOff + 3;
+                          const txtEnd = bch.end;
+                          if (txtEnd > txtStart && txtEnd <= buf.length) {
+                            const raw = str(buf, txtStart, txtEnd - txtStart);
+                            const c = makeCue(sTime, sTime + dur, raw);
+                            if (c) insertCue(cues, c);
+                          }
+                        }
+                      }
+                      bp = bch.end;
+                    }
+                  }
+                  cp = ch.end;
+                }
+              }
+              p = el.end;
+            }
+
+            offset += chunkSize;
+            scanned += chunkSize;
+          }
+        } catch (e) {
+          console.warn('MKV subtitle scan warning:', e);
+        }
+      })();
+
       return {
-        tick(now) { lastT = now; },
+        tick() {},
         active: (t) => activeCues(cues, t),
         destroy() { dead = true; }
       };
@@ -1905,7 +2052,7 @@
         playbackRate: false,
         aspectRatio: false,
         fullscreen: NATIVE_FS,
-        fullscreenWeb: true,
+        fullscreenWeb: false,
         miniProgressBar: false,
         mutex: true,
         backdrop: true,
@@ -1928,24 +2075,6 @@
             html: '<i class="gd-ico">' + SVG_ICONS.headphones + '</i>',
             tooltip: 'Audio Track (A)',
             click: () => toggleMenu('audio')
-          },
-          {
-            name: 'quality',
-            position: 'right',
-            index: 2,
-            html: '<span class="fw-bold" style="font-size:12px;border:1px solid currentColor;padding:1px 5px;border-radius:4px;">HD</span>',
-            tooltip: '1080p',
-            selector: [
-              { html: '<span style="color:#ff2a34;font-weight:700;">Original (1080p)</span>', value: '1080p', default: true },
-              { html: '720p', value: '720p' },
-              { html: '480p', value: '480p' },
-              { html: '360p', value: '360p' },
-              { html: '240p', value: '240p' }
-            ],
-            onSelect(item) {
-              showToast(`Quality: ${item.value}`);
-              return item.value;
-            }
           },
           {
             name: 'aspect-ratio',
@@ -1992,14 +2121,6 @@
             }
           },
           {
-            name: 'add-subtitles',
-            html: SVG_ICONS.addSub + ' Add subtitles',
-            tooltip: 'Site or device',
-            click() {
-              triggerSubtitleUpload();
-            }
-          },
-          {
             name: 'gd-boost',
             html: SVG_ICONS.volBoost + ' Volume boost',
             tooltip: '100%',
@@ -2007,41 +2128,6 @@
             onSelect(item) {
               volBooster.setLevel(item.value, art, boostBadge);
               return Math.round(item.value * 100) + '%';
-            }
-          },
-          {
-            name: 'gd-subcolor',
-            html: SVG_ICONS.subColor + ' Subtitle colour',
-            tooltip: 'White',
-            selector: [
-              { html: '<span style="color:#ffffff">White</span>', value: '#ffffff', default: true },
-              { html: '<span style="color:#ffeb3b">Yellow</span>', value: '#ffeb3b' },
-              { html: '<span style="color:#00ffff">Cyan</span>', value: '#00ffff' },
-              { html: '<span style="color:#69f0ae">Green</span>', value: '#69f0ae' },
-              { html: '<span style="color:#ff5252">Red</span>', value: '#ff5252' }
-            ],
-            onSelect(item) {
-              subs.setColor(item.value);
-              return item.html.replace(/<[^>]*>/g, '');
-            }
-          },
-          {
-            name: 'gd-subdelay',
-            html: SVG_ICONS.subDelay + ' Subtitle delay',
-            tooltip: '0.0s',
-            range: [0, -10, 10, 0.1],
-            onChange(item) {
-              subs.delay = Number(item.range[0]) || 0;
-              return subs.delay.toFixed(1) + 's';
-            }
-          },
-          {
-            name: 'gd-pip',
-            html: SVG_ICONS.pip + ' Picture-in-picture',
-            switch: false,
-            onSwitch(item) {
-              try { art.pip = !art.pip; } catch {}
-              return !item.switch;
             }
           }
         ]
@@ -2095,99 +2181,171 @@
       `;
       playerEl.appendChild(centerOverlay);
 
+      function togglePlayback() {
+        if (video.paused) {
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {
+              try { art.play(); } catch {}
+            });
+          }
+        } else {
+          video.pause();
+        }
+        revealControlsOnMovement();
+      }
+
       const [btnRewind, btnClapper, btnForward] = centerOverlay.querySelectorAll('.center-btn');
       btnRewind.addEventListener('click', (e) => {
         e.stopPropagation();
+        e.preventDefault();
         art.seek = Math.max(0, video.currentTime - 10);
         showToast('âª âˆ’10s');
-        showPlayerControls(true);
+        revealControlsOnMovement();
       });
       btnForward.addEventListener('click', (e) => {
         e.stopPropagation();
+        e.preventDefault();
         art.seek = Math.min(video.duration || Infinity, video.currentTime + 10);
         showToast('â© +10s');
-        showPlayerControls(true);
+        revealControlsOnMovement();
       });
       btnClapper.addEventListener('click', (e) => {
         e.stopPropagation();
-        art.toggle();
-        showPlayerControls(true);
-      });
-
-      art.on('play', () => {
-        btnClapper.innerHTML = SVG_ICONS.pause;
-        showPlayerControls(true);
-      });
-      art.on('pause', () => {
-        btnClapper.innerHTML = SVG_ICONS.play;
-        showPlayerControls(false);
+        e.preventDefault();
+        togglePlayback();
       });
 
       /* ==========================================================================
          AUTO-HIDE CONTROLS & CURSOR CONTROLLER
-         Controls hide when playing after inactivity; appear on click or cursor movement
+         Even if cursor is on player, idle timer hides everything! Only movement shows bar.
          ========================================================================== */
-      let controlTimer = null;
-      const HIDE_DELAY = 2400;
+      let hideTimeout = null;
+      const AUTO_HIDE_DELAY = 2200;
 
-      function showPlayerControls(autoHide = true) {
-        clearTimeout(controlTimer);
-        playerEl.classList.remove('art-hide-cursor');
-        playerEl.classList.add('art-control-show');
-        try { art.controls.show = true; } catch {}
+      function hideEverything() {
+        if (video.paused) return; // Keep controls visible if video is paused
+        const menuOpen = playerEl.querySelector('.gd-menu');
+        const settingsOpen = playerEl.querySelector('.art-settings:not([style*="display: none"])');
+        if (menuOpen || settingsOpen) return;
 
-        if (autoHide && !video.paused) {
-          controlTimer = setTimeout(() => {
-            const menuOpen = playerEl.querySelector('.gd-menu');
-            const settingsOpen = playerEl.querySelector('.art-settings:not([style*="display: none"])');
-            if (!menuOpen && !settingsOpen && !video.paused) {
-              hidePlayerControls();
-            }
-          }, HIDE_DELAY);
-        }
-      }
-
-      function hidePlayerControls() {
-        clearTimeout(controlTimer);
         playerEl.classList.remove('art-control-show');
         playerEl.classList.add('art-hide-cursor');
+        playerEl.classList.add('gd-idle-hidden');
         try { art.controls.show = false; } catch {}
       }
 
-      // Cursor movement over player reveals controls
+      function revealControlsOnMovement() {
+        clearTimeout(hideTimeout);
+        playerEl.classList.add('art-control-show');
+        playerEl.classList.remove('art-hide-cursor');
+        playerEl.classList.remove('gd-idle-hidden');
+        try { art.controls.show = true; } catch {}
+
+        if (!video.paused) {
+          hideTimeout = setTimeout(hideEverything, AUTO_HIDE_DELAY);
+        }
+      }
+
+      // Any cursor movement across player reveals controls and resets countdown
       playerEl.addEventListener('mousemove', () => {
-        showPlayerControls(true);
+        revealControlsOnMovement();
       });
 
-      // Pointer leave player hides controls immediately if playing
+      // Pointer leaves player -> immediately hide if playing
       playerEl.addEventListener('mouseleave', () => {
         if (!video.paused) {
-          hidePlayerControls();
-        }
-      });
-
-      // Click on player container reveals controls if hidden, or toggles them
-      playerEl.addEventListener('click', (e) => {
-        if (e.target.closest('.art-bottom, .art-settings, .gd-menu, .help, .center-btn')) return;
-
-        if (video.paused) {
-          showPlayerControls(false);
-        } else {
-          if (playerEl.classList.contains('art-control-show')) {
-            hidePlayerControls();
-          } else {
-            showPlayerControls(true);
-          }
+          clearTimeout(hideTimeout);
+          hideEverything();
         }
       });
 
       // Touch tap reveals controls
       playerEl.addEventListener('touchstart', () => {
-        showPlayerControls(true);
+        revealControlsOnMovement();
       }, { passive: true });
 
-      // Initially show controls while video is paused
-      showPlayerControls(false);
+      // Click on player video area toggles play/pause
+      playerEl.addEventListener('click', (e) => {
+        if (e.target.closest('.art-bottom, .art-settings, .gd-menu, .help, .center-btn, .gd-timeline-preview')) return;
+        togglePlayback();
+      });
+
+      const onPlayState = () => {
+        playerEl.classList.add('art-state-play');
+        playerEl.classList.remove('art-state-pause');
+        btnClapper.innerHTML = SVG_ICONS.pause;
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(hideEverything, AUTO_HIDE_DELAY);
+      };
+
+      const onPauseState = () => {
+        playerEl.classList.remove('art-state-play');
+        playerEl.classList.add('art-state-pause');
+        btnClapper.innerHTML = SVG_ICONS.play;
+        clearTimeout(hideTimeout);
+        revealControlsOnMovement();
+      };
+
+      art.on('play', onPlayState);
+      art.on('pause', onPauseState);
+      video.addEventListener('play', onPlayState);
+      video.addEventListener('pause', onPauseState);
+
+      // Initially show paused controls
+      onPauseState();
+
+      /* ==========================================================================
+         LIVE VIDEO TIMELINE SCRUBBER PREVIEW ON HOVER
+         ========================================================================== */
+      const previewWrap = document.createElement('div');
+      previewWrap.className = 'gd-timeline-preview';
+      previewWrap.innerHTML = `
+        <div class="gd-preview-box">
+          <video class="gd-preview-video" preload="metadata" muted playsinline></video>
+        </div>
+        <div class="gd-preview-time">00:00</div>
+      `;
+      playerEl.appendChild(previewWrap);
+
+      const previewVid = previewWrap.querySelector('.gd-preview-video');
+      previewVid.src = FILE_URL;
+      previewVid.muted = true;
+      const previewTimeEl = previewWrap.querySelector('.gd-preview-time');
+
+      let seekThrottle = 0;
+      const progressBar = playerEl.querySelector('.art-progress');
+
+      if (progressBar) {
+        progressBar.addEventListener('mousemove', (e) => {
+          const rect = progressBar.getBoundingClientRect();
+          const playerRect = playerEl.getBoundingClientRect();
+          const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+          const targetTime = ratio * (video.duration || 0);
+
+          const halfWidth = 77;
+          const cursorX = e.clientX - playerRect.left;
+          const clampedX = Math.max(halfWidth + 6, Math.min(playerRect.width - halfWidth - 6, cursorX));
+          previewWrap.style.left = clampedX + 'px';
+          previewWrap.style.display = 'flex';
+
+          const mins = Math.floor(targetTime / 60);
+          const secs = Math.floor(targetTime % 60);
+          previewTimeEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+          const now = Date.now();
+          if (now - seekThrottle > 80) {
+            seekThrottle = now;
+            if (Math.abs(previewVid.currentTime - targetTime) > 0.4) {
+              previewVid.currentTime = targetTime;
+            }
+          }
+        });
+
+        progressBar.addEventListener('mouseleave', () => {
+          previewWrap.style.display = 'none';
+        });
+      }
 
       /* ==========================================================================
          11. TRACK PARSING & INITIALIZATION
@@ -2331,13 +2489,16 @@
          ========================================================================== */
       function closeMenu() {
         if (menuEl) { menuEl.remove(); menuEl = null; }
-        if (!video.paused) showPlayerControls(true);
+        if (!video.paused) revealControlsOnMovement();
       }
 
       function toggleMenu(which) {
         if (menuEl && menuEl.dataset.which === which) return closeMenu();
         closeMenu();
-        showPlayerControls(false);
+        clearTimeout(hideTimeout);
+        playerEl.classList.add('art-control-show');
+        playerEl.classList.remove('art-hide-cursor');
+        playerEl.classList.remove('gd-idle-hidden');
 
         // 1. Aspect Ratio Menu (Exact match to screenshot)
         if (which === 'aspect') {
@@ -2375,6 +2536,21 @@
 
         if (which === 'subs') {
           menuEl.appendChild(createMenuItem({ label: 'Off' }, cur === -1, () => selectSub(-1)));
+
+          const loadRow = document.createElement('div');
+          loadRow.className = 'gd-mi';
+          loadRow.style.color = '#ff4d56';
+          loadRow.style.cursor = 'pointer';
+          loadRow.innerHTML = `
+            <span class="ck"><i class="fa fa-upload"></i></span>
+            <div class="lb"><div>Load Subtitle File (.srt, .vtt)</div></div>
+          `;
+          loadRow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeMenu();
+            triggerSubtitleUpload();
+          });
+          menuEl.appendChild(loadRow);
         }
 
         if (!items.length) {
