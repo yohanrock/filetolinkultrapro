@@ -86,7 +86,15 @@
     }
 
     .art-video-player .art-bottom {
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%) !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      transition: opacity 0.3s ease, transform 0.3s ease !important;
+    }
+
+    .art-video-player .art-mask-bottom,
+    .art-video-player .art-mask {
+      display: none !important;
+      background: none !important;
     }
 
     /* Red Accent Scrubber & Volume Slider */
@@ -190,19 +198,47 @@
       z-index: 28;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.25s ease;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
     }
 
-    /* Only show controls when paused or when mouse is actively moving */
+    /* Controls visibility: hide when playing; reveal on cursor move or click */
     .art-video-player.art-control-show .gd-center-controls,
     .art-video-player.art-state-pause .gd-center-controls {
       opacity: 1;
+      visibility: visible;
       pointer-events: auto;
     }
-    .art-video-player.art-hide-cursor .gd-center-controls,
-    .art-video-player:not(.art-control-show):not(.art-state-pause) .gd-center-controls {
+    .art-video-player.art-state-play:not(.art-control-show) .gd-center-controls,
+    .art-video-player.art-hide-cursor .gd-center-controls {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    .art-video-player.art-state-play:not(.art-control-show) .art-bottom,
+    .art-video-player.art-state-play:not(.art-control-show) .art-top,
+    .art-video-player.art-hide-cursor .art-bottom,
+    .art-video-player.art-hide-cursor .art-top {
       opacity: 0 !important;
       pointer-events: none !important;
+      transform: translateY(6px) !important;
+      transition: opacity 0.3s ease, transform 0.3s ease !important;
+    }
+
+    .art-video-player.art-control-show .art-bottom,
+    .art-video-player.art-control-show .art-top,
+    .art-video-player.art-state-pause .art-bottom,
+    .art-video-player.art-state-pause .art-top {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      transform: translateY(0) !important;
+      transition: opacity 0.3s ease, transform 0.3s ease !important;
+    }
+
+    .art-video-player.art-hide-cursor,
+    .art-video-player.art-hide-cursor * {
+      cursor: none !important;
     }
 
     /* Hide redundant internal Artplayer center state icon */
@@ -302,6 +338,11 @@
       vertical-align: -3px;
       fill: currentColor;
       opacity: 0.85;
+    }
+    /* Hide Artplayer default left-icon in settings to prevent double icon bug */
+    .art-setting-item-left-icon,
+    .art-setting-item-icon {
+      display: none !important;
     }
 
     /* Aspect Ratio Popup Menu (Exact match to screenshot) */
@@ -793,7 +834,7 @@
   <div class="d-flex flex-column min-vh-100">
 
     <!-- Header -->
-    <header class="py-2 shadow" style="background-color: #48cffe !important; color: #ffffff !important;">
+    <header class="py-2 shadow" style="background-color: transparent !important; color: #ffffff !important;">
       <div class="d-flex justify-content-between align-items-center container">
         <h1 class="h4 mb-0 fw-bold d-flex align-items-center">
           <img src="https://files.catbox.moe/4cxrp6.png" alt="Logo" width="30" height="30" class="rounded-circle me-2" style="object-fit: cover;">
@@ -922,16 +963,16 @@
       </div>
 
       <!-- Create Link & Share Buttons -->
-      <a id="demo4" onclick="showLinkModal('https://t.me/Infinity_movies_updates')" class="btn btn-warning w-100 mb-2" style="border: none; background-color: #ffd700; color: #000000;">
+      <a id="demo4" onclick="showLinkModal('https://t.me/example')" class="btn btn-warning w-100 mb-2" style="border: none; background-color: #ffc107; color: #000000;">
         <i class="fa-brands fa-telegram me-1"></i> Create Like This Link
       </a>
 
-      <a onclick="shareButton()" class="btn btn-danger w-100 mb-3" style="border: none; background-color: #ff1744; color: #ffffff;">
+      <a onclick="shareButton()" class="btn btn-danger w-100 mb-3" style="border: none; background-color: #dc3545; color: #ffffff;">
         <i class="fa fa-share-nodes me-1"></i> Share Now
       </a>
 
       <!-- File Information Card -->
-      <div class="card bg-dark text-light border-secondary mb-3" style="background-color: #292b2c !important; color: #ffffff !important;">
+      <div class="card bg-dark text-light border-secondary mb-3" style="background-color: #181a20 !important; color: #ffffff !important;">
         <div class="card-header border-secondary d-flex justify-content-between align-items-center">
           <h5 class="mb-0 fs-6 fw-bold"><i class="fa-solid fa-circle-info me-2"></i> File Information</h5>
           <span class="badge bg-secondary">Secure Stream</span>
@@ -949,11 +990,11 @@
       </div>
 
       <!-- Disclaimer & Report -->
-      <div class="alert alert-warning mb-4" style="background-color: #fff2c8; color: #6c4c00;">
+      <div class="alert alert-warning mb-4" style="background-color: rgba(255, 193, 7, 0.15); color: #ffc107;">
         <h6 class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i> Disclaimer</h6>
-        <p class="mb-2 small">This website only provides a service to help you play your video online without downloading.</p>
+        <p class="mb-2 small">This file is protected and streamed securely.</p>
         <div>
-          <a href="https://t.me/+GWjY9xCgbBliZTFl" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener">Report Issue</a>
+          <a href="#" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener">Report Issue</a>
         </div>
       </div>
 
@@ -962,7 +1003,7 @@
     <!-- Footer -->
     <footer class="text-center py-3 text-muted small border-top border-secondary">
       <div class="container">
-        <span>Powered by <b>Infinity Movies</b> · High-Performance In-Browser Streaming</span>
+        <span>Powered by <b>Infinity Movies</b> Â· High-Performance In-Browser Streaming</span>
       </div>
     </footer>
 
@@ -1851,6 +1892,7 @@
       let currentSub = -1;
       let mkv = null;
 
+      Artplayer.CONTROL_HIDE_TIME = 2400;
       const art = new Artplayer({
         container: container,
         url: FILE_URL,
@@ -1864,7 +1906,7 @@
         aspectRatio: false,
         fullscreen: NATIVE_FS,
         fullscreenWeb: true,
-        miniProgressBar: true,
+        miniProgressBar: false,
         mutex: true,
         backdrop: true,
         playsInline: true,
@@ -1950,21 +1992,6 @@
             }
           },
           {
-            name: 'aspect-ratio',
-            html: SVG_ICONS.aspectRatioSet + ' Aspect Ratio',
-            tooltip: 'Default',
-            selector: aspectRatios.map(r => ({
-              html: r.value === 'default' ? `<span style="color:#ff1e27;font-weight:700;">${r.label}</span>` : r.label,
-              value: r.value,
-              default: r.value === 'default'
-            })),
-            onSelect(item) {
-              const found = aspectRatios.find(x => x.value === item.value) || aspectRatios[0];
-              selectAspectRatio(found);
-              return found.label;
-            }
-          },
-          {
             name: 'add-subtitles',
             html: SVG_ICONS.addSub + ' Add subtitles',
             tooltip: 'Site or device',
@@ -1983,38 +2010,6 @@
             }
           },
           {
-            name: 'gd-subsize',
-            html: SVG_ICONS.subSize + ' Subtitle size',
-            tooltip: '75%',
-            selector: [
-              { html: '50%', value: 0.5 },
-              { html: '75%', value: 0.75, default: true },
-              { html: 'Normal (100%)', value: 1 },
-              { html: '125%', value: 1.25 },
-              { html: '150%', value: 1.5 },
-              { html: '200%', value: 2 }
-            ],
-            onSelect(item) {
-              subs.setScale(item.value);
-              return item.html;
-            }
-          },
-          {
-            name: 'gd-subfont',
-            html: SVG_ICONS.subFont + ' Subtitle font',
-            tooltip: 'Nunito',
-            selector: SUB_FONTS.map(f => ({
-              html: `<span style="font-family:${f.css}">${f.name}</span>`,
-              value: f.id,
-              default: f.id === 'nunito'
-            })),
-            onSelect(item) {
-              const f = subFont(item.value);
-              subs.setFont(f.id);
-              return f.name;
-            }
-          },
-          {
             name: 'gd-subcolor',
             html: SVG_ICONS.subColor + ' Subtitle colour',
             tooltip: 'White',
@@ -2028,16 +2023,6 @@
             onSelect(item) {
               subs.setColor(item.value);
               return item.html.replace(/<[^>]*>/g, '');
-            }
-          },
-          {
-            name: 'gd-subbg',
-            html: SVG_ICONS.subBg + ' Subtitle background',
-            switch: store.get('subBg', true),
-            onSwitch(item) {
-              const v = !item.switch;
-              subs.setBg(v);
-              return v;
             }
           },
           {
@@ -2096,14 +2081,14 @@
       const centerOverlay = document.createElement('div');
       centerOverlay.className = 'gd-center-controls';
       centerOverlay.innerHTML = `
-        <button class="center-btn seek-circle" title="Rewind 10s (←)">
+        <button class="center-btn seek-circle" title="Rewind 10s (â†)">
           ${SVG_ICONS.rewind10}
           <span class="center-btn-text">10</span>
         </button>
         <button class="center-btn center-clapper" title="Play / Pause (Space)">
           ${SVG_ICONS.play}
         </button>
-        <button class="center-btn seek-circle" title="Forward 10s (→)">
+        <button class="center-btn seek-circle" title="Forward 10s (â†’)">
           ${SVG_ICONS.forward10}
           <span class="center-btn-text">10</span>
         </button>
@@ -2114,24 +2099,95 @@
       btnRewind.addEventListener('click', (e) => {
         e.stopPropagation();
         art.seek = Math.max(0, video.currentTime - 10);
-        showToast('⏪ −10s');
+        showToast('âª âˆ’10s');
+        showPlayerControls(true);
       });
       btnForward.addEventListener('click', (e) => {
         e.stopPropagation();
         art.seek = Math.min(video.duration || Infinity, video.currentTime + 10);
-        showToast('⏩ +10s');
+        showToast('â© +10s');
+        showPlayerControls(true);
       });
       btnClapper.addEventListener('click', (e) => {
         e.stopPropagation();
         art.toggle();
+        showPlayerControls(true);
       });
 
       art.on('play', () => {
         btnClapper.innerHTML = SVG_ICONS.pause;
+        showPlayerControls(true);
       });
       art.on('pause', () => {
         btnClapper.innerHTML = SVG_ICONS.play;
+        showPlayerControls(false);
       });
+
+      /* ==========================================================================
+         AUTO-HIDE CONTROLS & CURSOR CONTROLLER
+         Controls hide when playing after inactivity; appear on click or cursor movement
+         ========================================================================== */
+      let controlTimer = null;
+      const HIDE_DELAY = 2400;
+
+      function showPlayerControls(autoHide = true) {
+        clearTimeout(controlTimer);
+        playerEl.classList.remove('art-hide-cursor');
+        playerEl.classList.add('art-control-show');
+        try { art.controls.show = true; } catch {}
+
+        if (autoHide && !video.paused) {
+          controlTimer = setTimeout(() => {
+            const menuOpen = playerEl.querySelector('.gd-menu');
+            const settingsOpen = playerEl.querySelector('.art-settings:not([style*="display: none"])');
+            if (!menuOpen && !settingsOpen && !video.paused) {
+              hidePlayerControls();
+            }
+          }, HIDE_DELAY);
+        }
+      }
+
+      function hidePlayerControls() {
+        clearTimeout(controlTimer);
+        playerEl.classList.remove('art-control-show');
+        playerEl.classList.add('art-hide-cursor');
+        try { art.controls.show = false; } catch {}
+      }
+
+      // Cursor movement over player reveals controls
+      playerEl.addEventListener('mousemove', () => {
+        showPlayerControls(true);
+      });
+
+      // Pointer leave player hides controls immediately if playing
+      playerEl.addEventListener('mouseleave', () => {
+        if (!video.paused) {
+          hidePlayerControls();
+        }
+      });
+
+      // Click on player container reveals controls if hidden, or toggles them
+      playerEl.addEventListener('click', (e) => {
+        if (e.target.closest('.art-bottom, .art-settings, .gd-menu, .help, .center-btn')) return;
+
+        if (video.paused) {
+          showPlayerControls(false);
+        } else {
+          if (playerEl.classList.contains('art-control-show')) {
+            hidePlayerControls();
+          } else {
+            showPlayerControls(true);
+          }
+        }
+      });
+
+      // Touch tap reveals controls
+      playerEl.addEventListener('touchstart', () => {
+        showPlayerControls(true);
+      }, { passive: true });
+
+      // Initially show controls while video is paused
+      showPlayerControls(false);
 
       /* ==========================================================================
          11. TRACK PARSING & INITIALIZATION
@@ -2146,7 +2202,7 @@
             const auds = mkv.tracks.filter(t => t.type === 2);
             audioItems = auds.map((t, i) => ({
               label: t.name || langName(t.lang) || `Audio ${i + 1}`,
-              sub: [t.name && langName(t.lang), codecLabel(t.codec), chLabel(t.channels)].filter(Boolean).join(' · '),
+              sub: [t.name && langName(t.lang), codecLabel(t.codec), chLabel(t.channels)].filter(Boolean).join(' Â· '),
               tag: t.def ? 'DEFAULT' : '',
               langKey: langName(t.lang) || t.name
             }));
@@ -2154,7 +2210,7 @@
 
             subItems = mkv.tracks.filter(t => t.type === 17).map(t => ({
               label: t.name || langName(t.lang) || `Subtitle ${t.number}`,
-              sub: [t.name && langName(t.lang), t.forced ? 'Forced' : '', subCodecLabel(t.codec)].filter(Boolean).join(' · '),
+              sub: [t.name && langName(t.lang), t.forced ? 'Forced' : '', subCodecLabel(t.codec)].filter(Boolean).join(' Â· '),
               track: t,
               disabled: /PGS|VOBSUB|DVB/i.test(t.codec),
               disabledReason: 'Image subtitles (PGS/VobSub) can only be viewed in external players like VLC or MX Player.'
@@ -2165,7 +2221,7 @@
             const list = await input.getAudioTracks();
             audioItems = list.map((t, i) => ({
               label: t.name || langName(t.languageCode) || `Audio ${i + 1}`,
-              sub: [codecLabel(t.codec), chLabel(t.numberOfChannels)].filter(Boolean).join(' · '),
+              sub: [codecLabel(t.codec), chLabel(t.numberOfChannels)].filter(Boolean).join(' Â· '),
               tag: t.disposition && t.disposition.default ? 'DEFAULT' : ''
             }));
           }
@@ -2275,11 +2331,13 @@
          ========================================================================== */
       function closeMenu() {
         if (menuEl) { menuEl.remove(); menuEl = null; }
+        if (!video.paused) showPlayerControls(true);
       }
 
       function toggleMenu(which) {
         if (menuEl && menuEl.dataset.which === which) return closeMenu();
         closeMenu();
+        showPlayerControls(false);
 
         // 1. Aspect Ratio Menu (Exact match to screenshot)
         if (which === 'aspect') {
@@ -2428,7 +2486,7 @@
             if (ripple) ripple.remove();
             ripple = document.createElement('div');
             ripple.className = 'gd-ripple ' + (zone < 0 ? 'l' : 'r');
-            ripple.innerHTML = `<span>${zone < 0 ? '⏪ ' : ''}${streak * 10}s${zone > 0 ? ' ⏩' : ''}</span>`;
+            ripple.innerHTML = `<span>${zone < 0 ? 'âª ' : ''}${streak * 10}s${zone > 0 ? ' â©' : ''}</span>`;
             playerEl.appendChild(ripple);
             const myRip = ripple;
             setTimeout(() => { if (myRip.parentNode) myRip.remove(); }, 650);
@@ -2565,16 +2623,16 @@
             <h3><i class="fa-solid fa-keyboard me-2"></i>Keyboard Shortcuts</h3>
             <div class="grid">
               <div><span>Play / Pause</span><kbd>Space / K</kbd></div>
-              <div><span>Seek Back / Forward</span><kbd>← / →</kbd></div>
-              <div><span>30s Fast Seek</span><kbd>Shift + ← →</kbd></div>
-              <div><span>Volume Boost (up to 400%)</span><kbd>↑ / ↓</kbd></div>
+              <div><span>Seek Back / Forward</span><kbd>â† / â†’</kbd></div>
+              <div><span>30s Fast Seek</span><kbd>Shift + â† â†’</kbd></div>
+              <div><span>Volume Boost (up to 400%)</span><kbd>â†‘ / â†“</kbd></div>
               <div><span>Mute Audio</span><kbd>M</kbd></div>
               <div><span>Toggle Fullscreen</span><kbd>F</kbd></div>
               <div><span>Switch Audio Track</span><kbd>A</kbd></div>
               <div><span>Cycle Subtitles</span><kbd>C</kbd></div>
               <div><span>Subtitle Delay -/+</span><kbd>G / H</kbd></div>
               <div><span>Playback Speed</span><kbd>&lt; / &gt;</kbd></div>
-              <div><span>Jump to 0% – 90%</span><kbd>0 – 9</kbd></div>
+              <div><span>Jump to 0% â€“ 90%</span><kbd>0 â€“ 9</kbd></div>
               <div><span>Picture-in-Picture</span><kbd>P</kbd></div>
             </div>
             <div class="text-end mt-3">
@@ -2762,4 +2820,3 @@
 </body>
 
 </html>
-
