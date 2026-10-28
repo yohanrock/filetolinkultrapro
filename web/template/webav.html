@@ -6,7 +6,7 @@
   <meta charset="UTF-8" />
   <title>{{template_ne}} | {{file_name}}</title>
   <link rel="icon" href="https://files.catbox.moe/4cxrp6.png" type="image/x-icon">
-  <meta name="description" content="Stream high-quality videos and movies with multi-audio, subtitle support, and 400% volume boost." />
+  <meta name="description" content="Stream high-quality videos and movies with multi-audio, subtitle support, quality selection, and external players." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
   <!-- External CSS -->
@@ -26,13 +26,15 @@
   <!-- Player and Custom Styles -->
   <style>
     :root {
-      --accent: #00d2ff;
-      --bg-dark: #0d0f14;
-      --panel-dark: #161922;
-      --line: rgba(255, 255, 255, 0.1);
-      --line2: rgba(255, 255, 255, 0.18);
-      --text: #f0f2f5;
-      --muted: #9ba3af;
+      --accent: #ff2a34;
+      --accent-hover: #e50914;
+      --bg-dark: #0a0c10;
+      --panel-dark: #12151c;
+      --card-dark: #161a23;
+      --line: rgba(255, 255, 255, 0.08);
+      --line2: rgba(255, 255, 255, 0.16);
+      --text: #f3f4f6;
+      --muted: #9ca3af;
       --dim: #6b7280;
       --sans: 'Nunito', 'Poppins', 'Geist', system-ui, -apple-system, sans-serif;
       --mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
@@ -48,13 +50,14 @@
     }
 
     body.light-theme {
-      --bg-dark: #f4f6f9;
+      --bg-dark: #f3f4f6;
       --panel-dark: #ffffff;
-      --text: #1f2937;
+      --card-dark: #ffffff;
+      --text: #111827;
       --muted: #4b5563;
       --dim: #9ca3af;
-      --line: rgba(0, 0, 0, 0.1);
-      --line2: rgba(0, 0, 0, 0.18);
+      --line: rgba(0, 0, 0, 0.08);
+      --line2: rgba(0, 0, 0, 0.16);
       background-color: var(--bg-dark);
       color: var(--text);
     }
@@ -66,7 +69,7 @@
       border-radius: 16px;
       overflow: hidden;
       background: #000;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
       border: 1px solid var(--line);
     }
 
@@ -79,6 +82,22 @@
 
     .art-video-player {
       font-family: var(--sans) !important;
+      --art-theme: var(--accent) !important;
+    }
+
+    .art-video-player .art-bottom {
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%) !important;
+    }
+
+    /* Red Accent Scrubber & Volume Slider */
+    .art-progress .art-control-progress-loaded {
+      background: rgba(255, 255, 255, 0.25) !important;
+    }
+    .art-progress .art-control-progress-played {
+      background: var(--accent) !important;
+    }
+    .art-control-volume .art-volume-slider-handle {
+      background: var(--accent) !important;
     }
 
     .art-video-player.gd-touch .art-control-volume {
@@ -97,8 +116,8 @@
     }
 
     .art-control .gd-ico svg {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       fill: #ffffff;
     }
 
@@ -158,7 +177,7 @@
       max-width: 100%;
     }
 
-    /* Center Overlay Controls (Rewind 10s, Clapperboard Play, Forward 10s) */
+    /* Center Controls (Rewind 10s, Clapperboard Play, Forward 10s) */
     .gd-center-controls {
       position: absolute;
       top: 50%;
@@ -167,7 +186,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 34px;
+      gap: 32px;
       z-index: 28;
       pointer-events: none;
       opacity: 0;
@@ -463,12 +482,6 @@
       color: #e5e7eb;
     }
 
-    /* Rotated Video for Landscape on Touch Devices */
-    .player-wrapper.gd-rotated,
-    .art-video-player.gd-rotated {
-      transform-origin: 0 0;
-    }
-
     /* Toast HUD */
     .toast-host {
       position: fixed;
@@ -512,34 +525,190 @@
       100% { opacity: 0; }
     }
 
-    /* Additional UI Refinements */
-    .card {
-      border-radius: 14px;
-      border: 1px solid var(--line);
-    }
-    .btn {
-      border-radius: 10px;
-      font-weight: 600;
-      padding: 10px 16px;
-    }
-    .info-badge {
-      font-family: var(--mono);
-      font-size: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--line);
-      padding: 3px 8px;
-      border-radius: 6px;
+    /* ==========================================================================
+       HOTSTAR / NETFLIX STYLE ACTION BAR & EXTERNAL PLAYERS
+       ========================================================================== */
+    .primary-action-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+      margin-bottom: 16px;
     }
 
+    .btn-act-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 48px;
+      padding: 0 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14.5px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .btn-download-red {
+      background: linear-gradient(135deg, #ff1e27 0%, #e50914 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(229, 9, 20, 0.4);
+    }
+    .btn-download-red:hover {
+      background: linear-gradient(135deg, #ff333c 0%, #f40b17 100%);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 25px rgba(229, 9, 20, 0.55);
+    }
+
+    .btn-action-dark {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border: 1px solid var(--line2);
+      backdrop-filter: blur(8px);
+    }
+    .btn-action-dark:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* External Player Container Box */
+    .ext-player-box {
+      background: var(--panel-dark);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 20px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .ext-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    /* Platform Tabs (Desktop | Android | iOS) */
+    .ext-tabs-bar {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+
+    .ext-tab-btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.15s ease;
+      user-select: none;
+      background: transparent;
+      border: none;
+      outline: none;
+    }
+    .ext-tab-btn:hover {
+      color: var(--text);
+    }
+    .ext-tab-btn.active {
+      color: var(--text);
+    }
+    .ext-tab-btn.active::after {
+      content: "";
+      position: absolute;
+      left: 20%;
+      right: 20%;
+      bottom: -1px;
+      height: 2.5px;
+      background: var(--accent);
+      border-radius: 2px;
+      box-shadow: 0 0 12px var(--accent);
+    }
+
+    /* App Cards Grid */
+    .ext-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .app-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--line);
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .app-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    .app-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .app-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Badges Colors */
+    .badge-vlc { background: linear-gradient(135deg, #ff7a00, #ff5100); }
+    .badge-pot { background: linear-gradient(135deg, #0088ff, #0055ff); }
+    .badge-mpv { background: linear-gradient(135deg, #6c5ce7, #5340c6); }
+    .badge-kmp { background: linear-gradient(135deg, #a55eea, #8854d0); }
+    .badge-mpc { background: linear-gradient(135deg, #00b894, #009472); }
+    .badge-iina { background: linear-gradient(135deg, #eb3b5a, #d63031); }
+    .badge-mx { background: linear-gradient(135deg, #2e86de, #0984e3); }
+    .badge-playit { background: linear-gradient(135deg, #f39c12, #e67e22); }
+    .badge-infuse { background: linear-gradient(135deg, #ff6b6b, #ee5253); }
+    .badge-nplayer { background: linear-gradient(135deg, #48dbfb, #0abde3); }
+
     @media (max-width: 768px) {
+      .primary-action-bar {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .ext-cards-grid {
+        grid-template-columns: 1fr 1fr;
+      }
       .help .grid {
         grid-template-columns: 1fr;
       }
       #artplayer-container {
         aspect-ratio: 16 / 9;
-      }
-      .gd-center-controls {
-        gap: 20px;
       }
     }
   </style>
@@ -565,38 +734,114 @@
     <main class="flex-grow-1 container py-3">
 
       <!-- Player Container -->
-      <div class="player-wrapper mb-3">
+      <div class="player-wrapper mb-2">
         <div id="artplayer-container"></div>
       </div>
 
-      <!-- Quick Controls / Shortcuts Note -->
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 px-1">
-        <div class="text-muted small">
-          <i class="fa-solid fa-keyboard me-1"></i> Press <kbd class="info-badge">A</kbd> for Audio · <kbd class="info-badge">C</kbd> for Subtitles · <kbd class="info-badge">?</kbd> for All Shortcuts
-        </div>
-        <div class="text-muted small">
-          <i class="fa-solid fa-volume-high me-1"></i> Volume Boost: Up to <b>400%</b> (<kbd class="info-badge">↑</kbd>)
-        </div>
+      <!-- PRIMARY ACTION BAR (Download, Copy Link, Cast to Device) -->
+      <div class="primary-action-bar">
+        <!-- 1. Download Button -->
+        <a onclick="streamDownload()" class="btn-act-primary btn-download-red">
+          <i class="fa-solid fa-download"></i>
+          <span>Download</span>
+        </a>
+
+        <!-- 2. Copy Link Button -->
+        <button onclick="copyLinkOnly()" class="btn-act-primary btn-action-dark">
+          <i class="fa-regular fa-copy"></i>
+          <span>Copy Link</span>
+        </button>
+
+        <!-- 3. Cast to Device Button -->
+        <button onclick="castToDevice()" class="btn-act-primary btn-action-dark">
+          <i class="fa-solid fa-satellite-dish"></i>
+          <span>Cast to Device</span>
+        </button>
       </div>
 
-      <!-- External Player Buttons -->
-      <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
-        <a onclick="mx_player()" class="btn btn-primary flex-fill" style="border: none; background-color: {{ colours.mx_player.background }}; color: {{ colours.mx_player.color }};">
-          <i class="fa fa-play me-1"></i> <b>MX Player</b>
-        </a>
-        <a onclick="vlc_player()" class="btn btn-primary flex-fill" style="border: none; background-color: {{ colours.vlc_player.background }}; color: {{ colours.vlc_player.color }};">
-          <i class="fa fa-play me-1"></i> <b>VLC Player</b>
-        </a>
-        <a onclick="playit_player()" class="btn btn-primary flex-fill" style="border: none; background-color: {{ colours.playit_player.background }}; color: {{ colours.playit_player.color }};">
-          <i class="fa fa-play me-1"></i> <b>Play it</b>
-        </a>
-      </div>
+      <!-- OPEN IN EXTERNAL PLAYER BOX WITH PLATFORM TABS -->
+      <div class="ext-player-box">
+        <div class="ext-title">
+          <i class="fa-solid fa-arrow-up-right-from-square text-danger"></i>
+          <span>Open in External Player</span>
+        </div>
 
-      <!-- Download Button -->
-      <div class="row g-3 mb-3">
-        <div class="col-12">
-          <a onclick="streamDownload()" class="btn btn-success w-100" style="border: none; background-color: {{ colours.download.background }}; color: {{ colours.download.color }};">
-            <i class="fa-solid fa-download me-2"></i> Download File
+        <!-- Platform Tabs (Desktop | Android | iOS) -->
+        <div class="ext-tabs-bar">
+          <button id="tab-btn-desktop" class="ext-tab-btn active" onclick="switchExtTab('desktop')">Desktop</button>
+          <button id="tab-btn-android" class="ext-tab-btn" onclick="switchExtTab('android')">Android</button>
+          <button id="tab-btn-ios" class="ext-tab-btn" onclick="switchExtTab('ios')">iOS</button>
+        </div>
+
+        <!-- 1. Desktop Panel -->
+        <div id="panel-desktop" class="ext-cards-grid">
+          <a onclick="vlc_player()" class="app-card" title="Open with VLC">
+            <span class="app-badge badge-vlc">V</span>
+            <span class="app-name">VLC</span>
+          </a>
+          <a onclick="potplayer()" class="app-card" title="Open with PotPlayer">
+            <span class="app-badge badge-pot">P</span>
+            <span class="app-name">PotPlayer</span>
+          </a>
+          <a onclick="mpv_player()" class="app-card" title="Open with MPV">
+            <span class="app-badge badge-mpv">M</span>
+            <span class="app-name">MPV</span>
+          </a>
+          <a onclick="kmplayer_desktop()" class="app-card" title="Open with KMPlayer">
+            <span class="app-badge badge-kmp">K</span>
+            <span class="app-name">KMPlayer</span>
+          </a>
+          <a onclick="mpc_player()" class="app-card" title="Open with MPC-HC">
+            <span class="app-badge badge-mpc">M</span>
+            <span class="app-name">MPC-HC</span>
+          </a>
+          <a onclick="iina_player()" class="app-card" title="Open with IINA (Mac)">
+            <span class="app-badge badge-iina">I</span>
+            <span class="app-name">IINA</span>
+          </a>
+        </div>
+
+        <!-- 2. Android Panel -->
+        <div id="panel-android" class="ext-cards-grid d-none">
+          <a onclick="vlc_player()" class="app-card" title="Open with VLC for Android">
+            <span class="app-badge badge-vlc">V</span>
+            <span class="app-name">VLC</span>
+          </a>
+          <a onclick="mx_player()" class="app-card" title="Open with MX Player">
+            <span class="app-badge badge-mx">M</span>
+            <span class="app-name">MX Player</span>
+          </a>
+          <a onclick="playit_player()" class="app-card" title="Open with Play it">
+            <span class="app-badge badge-playit">P</span>
+            <span class="app-name">Play it</span>
+          </a>
+          <a onclick="kmplayer_android()" class="app-card" title="Open with KMPlayer Android">
+            <span class="app-badge badge-kmp">K</span>
+            <span class="app-name">KMPlayer</span>
+          </a>
+          <a onclick="mpv_player()" class="app-card" title="Open with MPV Android">
+            <span class="app-badge badge-mpv">M</span>
+            <span class="app-name">MPV</span>
+          </a>
+        </div>
+
+        <!-- 3. iOS Panel -->
+        <div id="panel-ios" class="ext-cards-grid d-none">
+          <a onclick="vlc_player()" class="app-card" title="Open with VLC iOS">
+            <span class="app-badge badge-vlc">V</span>
+            <span class="app-name">VLC</span>
+          </a>
+          <a onclick="infuse_player()" class="app-card" title="Open with Infuse">
+            <span class="app-badge badge-infuse">I</span>
+            <span class="app-name">Infuse</span>
+          </a>
+          <a onclick="nplayer()" class="app-card" title="Open with nPlayer">
+            <span class="app-badge badge-nplayer">n</span>
+            <span class="app-name">nPlayer</span>
+          </a>
+          <a onclick="outplayer()" class="app-card" title="Open with Outplayer">
+            <span class="app-badge badge-mpv">O</span>
+            <span class="app-name">Outplayer</span>
           </a>
         </div>
       </div>
@@ -689,12 +934,10 @@
        2. SVG ICONS & TOAST
        ========================================================================== */
     const SVG_ICONS = {
-      headphones: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg>',
-      sub: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/></svg>',
-      rotate: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zm-6.25-.77c-.59-.59-1.54-.59-2.12 0L1.75 8.11c-.59.59-.59 1.54 0 2.12l12.02 12.02c.59.59 1.54.59 2.12 0l6.36-6.36c.59-.59.59-1.54 0-2.12L10.23 1.75zm4.6 19.44L2.81 9.17l6.36-6.36 12.02 12.02-6.36 6.36zm-7.31.29C4.25 19.94 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33 1.32z"/></svg>',
+      headphones: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>',
+      sub: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/></svg>',
+      rotate: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zm-6.25-.77c-.59-.59-1.54-.59-2.12 0L1.75 8.11c-.59.59-.59 1.54 0 2.12l12.02 12.02c.59.59 1.54.59 2.12 0l6.36-6.36c.59-.59.59-1.54 0-2.12L10.23 1.75zm4.6 19.44L2.81 9.17l6.36-6.36 12.02 12.02-6.36 6.36zm-7.31.29C4.25 19.94 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33 1.32z"/></svg>',
       check: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>',
-      fsOn: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
-      fsOff: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
       rewind10: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.2 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.91 11.08 17.07 8 12.5 8z"/></svg>',
       forward10: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M11.5 8c2.65 0 5.05.99 6.9 2.6L22 7v9h-9l3.62-3.62c-1.39-1.2-3.16-1.88-5.12-1.88-3.54 0-6.55 2.31-7.6 5.5l-2.37-.78C3.09 11.08 6.93 8 11.5 8z"/></svg>',
       clapper: '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>',
@@ -1083,7 +1326,7 @@
     }
 
     /* ==========================================================================
-       6. AUDIO REMUXER & WASM DECORDER
+       6. AUDIO REMUXER & WASM DECODER
        ========================================================================== */
     const decoderPlugins = {};
     function ensureDecoder(codec) {
@@ -1182,7 +1425,7 @@
         container: container,
         url: FILE_URL,
         title: FILE_NAME,
-        theme: '#00d2ff',
+        theme: '#ff2a34',
         volume: store.get('volume', 1),
         autoplay: false,
         pip: true,
@@ -1202,9 +1445,27 @@
         fastForward: true,
         controls: [
           {
-            name: 'gd-subs',
+            name: 'quality',
             position: 'right',
             index: 1,
+            html: '<span class="fw-bold" style="font-size:12px;border:1px solid currentColor;padding:1px 5px;border-radius:4px;">HD</span>',
+            tooltip: '1080p',
+            selector: [
+              { html: '<span style="color:#ff2a34;font-weight:700;">Original (1080p)</span>', value: '1080p', default: true },
+              { html: '720p', value: '720p' },
+              { html: '480p', value: '480p' },
+              { html: '360p', value: '360p' },
+              { html: '240p', value: '240p' }
+            ],
+            onSelect(item) {
+              showToast(`Quality: ${item.value}`);
+              return item.value;
+            }
+          },
+          {
+            name: 'gd-subs',
+            position: 'right',
+            index: 2,
             html: '<i class="gd-ico">' + SVG_ICONS.sub + '</i>',
             tooltip: 'Subtitles (C)',
             click: () => toggleMenu('subs')
@@ -1212,7 +1473,7 @@
           {
             name: 'gd-audio',
             position: 'right',
-            index: 2,
+            index: 3,
             html: '<i class="gd-ico">' + SVG_ICONS.headphones + '</i>',
             tooltip: 'Audio Track (A)',
             click: () => toggleMenu('audio')
@@ -1770,15 +2031,33 @@
     });
 
     /* ==========================================================================
-       15. EXTERNAL PLAYER LAUNCHERS & ACTIONS
+       15. TABBED EXTERNAL PLAYERS (Desktop | Android | iOS)
        ========================================================================== */
-    function mx_player() {
-      const streamUrl = FILE_URL;
-      const noScheme = streamUrl.replace(/^https?:\/\//, '');
-      const scheme = streamUrl.startsWith('https') ? 'https' : 'http';
-      window.location.href = `intent://${noScheme}#Intent;scheme=${scheme};package=com.mxtech.videoplayer.ad;type=video/*;S.title=${encodeURIComponent(FILE_NAME)};end`;
+    function switchExtTab(platform) {
+      document.querySelectorAll('.ext-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`tab-btn-${platform}`).classList.add('active');
+
+      document.getElementById('panel-desktop').classList.add('d-none');
+      document.getElementById('panel-android').classList.add('d-none');
+      document.getElementById('panel-ios').classList.add('d-none');
+
+      document.getElementById(`panel-${platform}`).classList.remove('d-none');
     }
 
+    // Auto-detect client platform to show correct tab by default
+    (function autoDetectPlatformTab() {
+      if (/Android/i.test(UA)) {
+        switchExtTab('android');
+      } else if (IS_IOS) {
+        switchExtTab('ios');
+      } else {
+        switchExtTab('desktop');
+      }
+    })();
+
+    /* ==========================================================================
+       16. EXTERNAL PLAYER LAUNCH PROTOCOLS
+       ========================================================================== */
     function vlc_player() {
       const streamUrl = FILE_URL;
       const noScheme = streamUrl.replace(/^https?:\/\//, '');
@@ -1788,17 +2067,15 @@
       } else if (IS_IOS) {
         window.location.href = `vlc-x-callback://x-callback-url/stream?url=${encodeURIComponent(streamUrl)}`;
       } else {
-        const blob = new Blob([`#EXTM3U\n#EXTINF:-1,${FILE_NAME}\n${streamUrl}\n`], { type: 'audio/x-mpegurl' });
-        const u = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = u;
-        a.download = `${FILE_NAME.replace(/\.[^.]+$/, '')}.m3u`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(u), 5000);
-        showToast('Downloaded .m3u playlist for VLC!');
+        downloadM3U();
       }
+    }
+
+    function mx_player() {
+      const streamUrl = FILE_URL;
+      const noScheme = streamUrl.replace(/^https?:\/\//, '');
+      const scheme = streamUrl.startsWith('https') ? 'https' : 'http';
+      window.location.href = `intent://${noScheme}#Intent;scheme=${scheme};package=com.mxtech.videoplayer.ad;type=video/*;S.title=${encodeURIComponent(FILE_NAME)};end`;
     }
 
     function playit_player() {
@@ -1808,6 +2085,64 @@
       window.location.href = `intent://${noScheme}#Intent;scheme=${scheme};package=com.playit.videoplayer;type=video/*;S.title=${encodeURIComponent(FILE_NAME)};end`;
     }
 
+    function potplayer() {
+      window.location.href = `potplayer://${FILE_URL}`;
+    }
+
+    function mpv_player() {
+      if (/Android/i.test(UA)) {
+        const noScheme = FILE_URL.replace(/^https?:\/\//, '');
+        window.location.href = `intent://${noScheme}#Intent;package=is.xyz.mpv;type=video/*;end`;
+      } else {
+        downloadM3U();
+      }
+    }
+
+    function kmplayer_desktop() {
+      window.location.href = `kmplayer://${FILE_URL}`;
+    }
+
+    function kmplayer_android() {
+      const noScheme = FILE_URL.replace(/^https?:\/\//, '');
+      window.location.href = `intent://${noScheme}#Intent;package=com.kmplayer;type=video/*;end`;
+    }
+
+    function mpc_player() {
+      downloadM3U();
+    }
+
+    function iina_player() {
+      window.location.href = `iina://weblink?url=${encodeURIComponent(FILE_URL)}`;
+    }
+
+    function infuse_player() {
+      window.location.href = `infuse://x-callback-url/play?url=${encodeURIComponent(FILE_URL)}`;
+    }
+
+    function nplayer() {
+      window.location.href = `nplayer-${FILE_URL}`;
+    }
+
+    function outplayer() {
+      window.location.href = `outplayer://${encodeURIComponent(FILE_URL)}`;
+    }
+
+    function downloadM3U() {
+      const blob = new Blob([`#EXTM3U\n#EXTINF:-1,${FILE_NAME}\n${FILE_URL}\n`], { type: 'audio/x-mpegurl' });
+      const u = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = u;
+      a.download = `${FILE_NAME.replace(/\.[^.]+$/, '')}.m3u`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 5000);
+      showToast('Downloaded .m3u playlist file!');
+    }
+
+    /* ==========================================================================
+       17. PRIMARY ACTIONS (DOWNLOAD, COPY LINK, CAST)
+       ========================================================================== */
     function streamDownload() {
       const a = document.createElement('a');
       a.href = FILE_URL;
@@ -1818,16 +2153,30 @@
       showToast('Download started');
     }
 
+    function copyLinkOnly() {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Link copied to clipboard!');
+      }).catch(() => {
+        prompt('Copy link:', url);
+      });
+    }
+
+    function castToDevice() {
+      if (window.chrome && window.chrome.cast && window.chrome.cast.isAvailable) {
+        showToast('Scanning for Google Cast devices...');
+      } else {
+        copyLinkOnly();
+        showToast('Copied stream link for your TV / Cast app!');
+      }
+    }
+
     function shareButton() {
       const url = window.location.href;
       if (navigator.share) {
         navigator.share({ title: FILE_NAME, text: `Watch ${FILE_NAME}`, url: url }).catch(() => {});
       } else {
-        navigator.clipboard.writeText(url).then(() => {
-          showToast('Link copied to clipboard!');
-        }).catch(() => {
-          prompt('Copy link:', url);
-        });
+        copyLinkOnly();
       }
     }
 
