@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* Custom Scrollbar matching screenshot */
+    .aspect-scroll::-webkit-scrollbar {
+      width: 14px;
+    }
+    .aspect-scroll::-webkit-scrollbar-track {
+      background: #1c1d22;
+      border-radius: 0 8px 8px 0;
+    }
+    .aspect-scroll::-webkit-scrollbar-thumb {
+      background: #8e9095;
+      border: 3px solid #1c1d22;
+      border-radius: 7px;
+    }
+    .aspect-scroll::-webkit-scrollbar-button:single-button {
+      background-color: #1c1d22;
+      display: block;
+      border-style: solid;
+      height: 12px;
+      width: 14px;
+    }
+    .aspect-scroll::-webkit-scrollbar-button:single-button:vertical:decrement {
+      border-width: 0 4px 5px 4px;
+      border-color: transparent transparent #8e9095 transparent;
+    }
+    .aspect-scroll::-webkit-scrollbar-button:single-button:vertical:increment {
+      border-width: 5px 4px 0 4px;
+      border-color: #8e9095 transparent transparent transparent;
+    }
+
+    /* Switch toggle styling */
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #ff1e27;
+      background-color: #ff1e27;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #ff1e27;
+    }
+  </style>
+</head>
+<body class="bg-[#0a0c10] text-[#f3f4f6] antialiased p-4">
+
+  <div class="max-w-4xl mx-auto space-y-4">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <div class="flex items-center gap-3">
+        <img src="https://files.catbox.moe/4cxrp6.png" alt="Logo" class="w-8 h-8 rounded-full border border-white/20 object-cover">
+        <div>
+          <h1 class="text-base font-bold text-white flex items-center gap-2">
+            <span>Infinity Movies · Play Speed & Player Settings</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-600/20 text-red-400 font-mono border border-red-600/30">MATCHED</span>
+          </h1>
+          <p class="text-xs text-gray-400">Click ⚙ (Settings) or [⛶] (Aspect Ratio) to test the exact menus from your screenshots</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-mono text-gray-400">Speed:</span>
+        <span id="header-speed-badge" class="text-xs font-mono text-red-400 font-bold px-2 py-0.5 rounded bg-red-500/10 border border-red-500/30">Normal</span>
+      </div>
+    </div>
+
+    <!-- VIDEO PLAYER MOCKUP -->
+    <div class="relative bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10 aspect-video select-none group">
+      
+      <!-- Video Screen Canvas -->
+      <div id="video-sim-canvas" class="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black flex flex-col items-center justify-center p-6 text-center transition-all duration-300">
+        <!-- Toast Notification inside player -->
+        <div id="player-toast" class="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-zinc-900/90 text-red-400 text-xs font-semibold border border-red-500/40 shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-50">
+          Toast
+        </div>
+
+        <div id="aspect-preview-box" class="w-64 h-36 border-2 border-dashed border-red-500/60 rounded-lg flex items-center justify-center bg-red-500/5 transition-all duration-300 relative">
+          <div class="text-center">
+            <span id="aspect-label-preview" class="text-xs font-bold text-red-400 font-mono block">Fit (Default) · 16:9</span>
+            <span id="speed-label-preview" class="text-[10px] text-gray-400 font-mono block mt-1">Playback: 1.0x (Normal)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXACT SETTINGS MENU POPUP (Matching media_1793209908801_5081233d.png) -->
+      <div id="settings-menu-popup" class="absolute right-12 bottom-12 w-64 bg-[#10121a]/95 backdrop-blur-xl border border-white/20 rounded-xl overflow-hidden shadow-2xl z-40 p-1.5 space-y-0.5 text-xs text-white">
+        
+        <!-- 1. Play Speed (Top item from screenshot!) -->
+        <div onclick="cycleSpeed()" class="px-2.5 py-2 rounded-lg hover:bg-white/10 flex items-center justify-between cursor-pointer transition group">
+          <div class="flex items-center gap-2">
+            <!-- Circular play-speed icon -->
+            <svg class="w-4 h-4 text-gray-300 group-hover:text-red-400 transition" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+            </svg>
+            <span class="font-medium">Play Speed</span>
+          </div>
+          <div class="flex items-center gap-1 text-gray-400 text-[11px]">
+            <span id="setting-speed-val" class="text-white font-semibold">Normal</span>
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <!-- 2. Aspect Ratio (Directly below Play Speed) -->
+        <div onclick="openAspectFromSettings()" class="px-2.5 py-2 rounded-lg hover:bg-white/10 flex items-center justify-between cursor-pointer transition group">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-300 group-hover:text-red-400 transition" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/>
+            </svg>
+            <span class="font-medium">Aspect Ratio</span>
+          </div>
+          <div class="flex items-center gap-1 text-gray-400 text-[11px]">
+            <span id="setting-aspect-val" class="text-white font-semibold">Default</span>
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <!-- 3. Add subtitles -->
+        <div onclick="toast('Add Subtitles: File Picker Opened')" class="px-2.5 py-2 rounded-lg hover:bg-white/10 flex items-center justify-between cursor-pointer transition group">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-300 group-hover:text-red-400 transition" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/>
+            </svg>
+            <span class="font-medium">Add subtitles</span>
+          </div>
+          <span class="text-gray-400 text-[11px]">Site or device</span>
+        </div>
+
+        <!-- 4. Volume boost -->
+        <div onclick="cycleBoost()" class="px-2.5 py-2 rounded-lg hover:bg-white/10 flex items-center justify-between cursor-pointer transition group">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-300 group-hover:text-red-400 transition" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+            <span class="font-medium">Volume boost</span>
+          </div>
+          <div class="flex items-center gap-1 text-gray-400 text-[11px]">
+            <span id="setting-boost-val" class="text-white font-semibold">100%</span>
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <!-- 5. Subtitle size -->
+        <div onclick="cycleSubSize()" class="px-2.5 py-2 rounded-lg hover:bg-white/10 flex items-center justify-between cursor-pointer transition group">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-300 group-hover:text-red-400 transition" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z"/>
+            </svg>
+            <span class="font-medium">Subtitle size</span>
+          </div>
+          <div class="flex items-center gap-1 text-gray-400 text-[11px]">
+            <span id="setting-subsize-val" class="text-white font-semibold">75%</span>
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <!-- 6. Subtitle font -->
+        <div onclick="cycleSubFont()" class="px-2.5 py-2 rounded-lg hover:bg-white/10 flex items-center justify-between cursor-pointer transition group">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-300 group-hover:text-red-400 transition" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9.93 13.5h4.14L12 7.98zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5l-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z"/>
+            </svg>
+            <span class="font-medium">Subtitle font</span>
+          </div>
+          <div class="flex items-center gap-1 text-gray-400 text-[11px]">
+            <span id="setting-subfont-val" class="text-white font-semibold">Nunito</span>
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <!-- 7. Subtitle colour -->
+        <div onclick="cycleSubColor()" class="px-2.5 py-2 rounded-lg hover:bg-white/10 flex items-center justify-between cursor-pointer transition group">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-300 group-hover:text-red-400 transition" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.27 19.59 10.59 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+            </svg>
+            <span class="font-medium">Subtitle colour</span>
+          </div>
+          <div class="flex items-center gap-1 text-gray-400 text-[11px]">
+            <span id="setting-subcolor-val" class="text-white font-semibold">White</span>
+            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <!-- 8. Subtitle background (Switch) -->
+        <div class="px-2.5 py-2 rounded-lg flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+            </svg>
+            <span class="font-medium">Subtitle background</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" checked onchange="toast(this.checked ? 'Subtitle Background: ON' : 'Subtitle Background: OFF')" class="sr-only peer">
+            <div class="w-8 h-4 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-red-600"></div>
+          </label>
+        </div>
+
+        <!-- 9. Subtitle delay (Slider) -->
+        <div class="px-2.5 py-2 rounded-lg flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+            </svg>
+            <span class="font-medium">Subtitle delay</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="range" min="-5" max="5" step="0.5" value="0" oninput="document.getElementById('sub-delay-val').textContent = (this.value >= 0 ? '+' : '') + Number(this.value).toFixed(1) + 's'" class="w-16 h-1 accent-red-600">
+            <span id="sub-delay-val" class="text-[10px] text-gray-300 font-mono w-7 text-right">0.0s</span>
+          </div>
+        </div>
+
+        <!-- 10. Picture-in-picture (Switch) -->
+        <div class="px-2.5 py-2 rounded-lg flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/>
+            </svg>
+            <span class="font-medium">Picture-in-picture</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" onchange="toast(this.checked ? 'Picture-in-Picture Activated' : 'Picture-in-Picture Closed')" class="sr-only peer">
+            <div class="w-8 h-4 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-red-600"></div>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- EXACT VERTICAL SCROLLABLE ASPECT RATIOS MENU (Hidden by default) -->
+      <div id="aspect-menu-popup" class="hidden absolute right-36 bottom-12 w-52 bg-[#141518] border border-white/20 rounded-xl overflow-hidden shadow-2xl z-40 aspect-scroll max-h-56 overflow-y-scroll">
+        <!-- 1. Fit (Default) - Highlighted in Red -->
+        <button onclick="applyAspect('Fit (Default)', 'w-64 h-36', 0)" id="asp-0" class="w-full text-left px-3.5 py-2.5 text-xs font-bold text-[#ff1e27] bg-[#ff1e27]/20 border-b border-white/5 transition flex items-center justify-between">
+          <span>Fit (Default)</span>
+          <span class="text-[10px] text-red-400">✓</span>
+        </button>
+
+        <!-- 2. Stretch -->
+        <button onclick="applyAspect('Stretch', 'w-full h-full', 1)" id="asp-1" class="w-full text-left px-3.5 py-2.5 text-xs font-medium text-gray-200 hover:bg-white/10 border-b border-white/5 transition">
+          Stretch
+        </button>
+
+        <!-- 3. Zoom / Crop -->
+        <button onclick="applyAspect('Zoom / Crop', 'w-72 h-44', 2)" id="asp-2" class="w-full text-left px-3.5 py-2.5 text-xs font-medium text-gray-200 hover:bg-white/10 border-b border-white/5 transition">
+          Zoom / Crop
+        </button>
+
+        <!-- 4. 16:9 Widescreen -->
+        <button onclick="applyAspect('16:9 Widescreen', 'w-64 h-36', 3)" id="asp-3" class="w-full text-left px-3.5 py-2.5 text-xs font-medium text-gray-200 hover:bg-white/10 border-b border-white/5 transition">
+          16:9 Widescreen
+        </button>
+
+        <!-- 5. 9:16 Vertical -->
+        <button onclick="applyAspect('9:16 Vertical', 'w-28 h-50', 4)" id="asp-4" class="w-full text-left px-3.5 py-2.5 text-xs font-medium text-gray-200 hover:bg-white/10 border-b border-white/5 transition">
+          9:16 Vertical
+        </button>
+
+        <!-- 6. 4:3 Standard -->
+        <button onclick="applyAspect('4:3 Standard', 'w-52 h-40', 5)" id="asp-5" class="w-full text-left px-3.5 py-2.5 text-xs font-medium text-gray-200 hover:bg-white/10 border-b border-white/5 transition">
+          4:3 Standard
+        </button>
+
+        <!-- 7. 21:9 Ultrawide -->
+        <button onclick="applyAspect('21:9 Ultrawide', 'w-80 h-32', 6)" id="asp-6" class="w-full text-left px-3.5 py-2.5 text-xs font-medium text-gray-200 hover:bg-white/10 border-b border-white/5 transition">
+          21:9 Ultrawide
+        </button>
+
+        <!-- 8. 18:9 Univisium (2:1) -->
+        <button onclick="applyAspect('18:9 Univisium (2:1)', 'w-72 h-36', 7)" id="asp-7" class="w-full text-left px-3.5 py-2.5 text-xs font-medium text-gray-200 hover:bg-white/10 border-b border-white/5 transition">
+          18:9 Univisium (2:1)
+        </button>
+
+        <!-- 9. 1:1 Square -->
+        <button onclick="applyAspect('1:1 Square', 'w-40 h-40', 8)" id="asp-8" class="w-full text-left px-3.5 py-2.5 text-xs font-medium text-gray-200 hover:bg-white/10 transition">
+          1:1 Square
+        </button>
+      </div>
+
+      <!-- BOTTOM CONTROL BAR (With 🎵, HD, Aspect Ratio [⛶], [CC], ⚙, ⛶) -->
+      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/85 to-transparent px-4 py-3 flex items-center justify-between text-white text-xs z-20">
+        
+        <div class="flex items-center gap-3">
+          <button class="hover:text-red-500 transition"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+          <button class="hover:text-red-500 transition"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="hover:text-red-500 transition"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+        </div>
+
+        <div class="flex-1 mx-4 max-w-xl">
+          <div class="w-full h-1 bg-white/20 rounded-full relative">
+            <div class="h-full bg-red-600 w-1/4 rounded-full relative"></div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-gray-300 text-[11px]">00:00 / 31:11</span>
+          
+          <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+
+          <!-- 1. Audio Icon (🎵) -->
+          <button onclick="toast('Audio Track Menu (A)')" class="hover:text-red-400 transition" title="Audio Tracks (A)">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </button>
+
+          <!-- 2. HD Quality Button -->
+          <button onclick="toast('HD Quality: 1080p Original')" class="font-bold text-[11px] px-1 py-0.5 rounded border border-current hover:text-red-400 transition" title="Quality">
+            HD
+          </button>
+
+          <!-- 3. Aspect Ratio Button ([⛶]) (Exact match to screenshot!) -->
+          <button onclick="toggleAspectMenu()" class="hover:text-red-400 transition font-bold" title="Aspect Ratio">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/></svg>
+          </button>
+
+          <!-- 4. CC Subtitles Icon -->
+          <button onclick="toast('Subtitles Menu (C)')" class="hover:text-red-400 transition"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/></svg></button>
+          
+          <!-- 5. Settings Gear -->
+          <button onclick="toggleSettingsMenu()" class="text-red-500 hover:text-red-400 transition" title="Settings Panel"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
+
+          <!-- 6. External Window -->
+          <button onclick="toast('Open in External Player')" class="hover:text-red-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Live Status & Information Cards -->
+    <div class="grid grid-cols-2 gap-3 text-xs">
+      <div class="p-3 bg-zinc-900 border border-white/10 rounded-xl flex items-center justify-between">
+        <span class="text-gray-400">Aspect Ratio:</span>
+        <b id="active-mode-name" class="text-red-400">Fit (Default)</b>
+      </div>
+      <div class="p-3 bg-zinc-900 border border-white/10 rounded-xl flex items-center justify-between">
+        <span class="text-gray-400">Play Speed:</span>
+        <b id="active-speed-name" class="text-white font-mono">1.0x (Normal)</b>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let toastTimeout = null;
+    function toast(msg) {
+      const el = document.getElementById('player-toast');
+      el.textContent = msg;
+      el.style.opacity = '1';
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { el.style.opacity = '0'; }, 2200);
+    }
+
+    function toggleSettingsMenu() {
+      const setPopup = document.getElementById('settings-menu-popup');
+      setPopup.classList.toggle('hidden');
+      document.getElementById('aspect-menu-popup').classList.add('hidden');
+    }
+
+    function toggleAspectMenu() {
+      const aspPopup = document.getElementById('aspect-menu-popup');
+      aspPopup.classList.toggle('hidden');
+      document.getElementById('settings-menu-popup').classList.add('hidden');
+    }
+
+    function openAspectFromSettings() {
+      document.getElementById('settings-menu-popup').classList.add('hidden');
+      document.getElementById('aspect-menu-popup').classList.remove('hidden');
+      toast('Choose Aspect Ratio');
+    }
+
+    // Speeds cycle: 0.5x -> 0.75x -> Normal (1.0x) -> 1.25x -> 1.5x -> 2.0x
+    const speeds = [
+      { label: 'Normal', rate: 1.0 },
+      { label: '1.25x', rate: 1.25 },
+      { label: '1.5x', rate: 1.5 },
+      { label: '2.0x', rate: 2.0 },
+      { label: '0.5x', rate: 0.5 },
+      { label: '0.75x', rate: 0.75 }
+    ];
+    let curSpeedIdx = 0;
+    function cycleSpeed() {
+      curSpeedIdx = (curSpeedIdx + 1) % speeds.length;
+      const spd = speeds[curSpeedIdx];
+      document.getElementById('setting-speed-val').textContent = spd.label;
+      document.getElementById('header-speed-badge').textContent = spd.label;
+      document.getElementById('active-speed-name').textContent = spd.rate + 'x (' + spd.label + ')';
+      document.getElementById('speed-label-preview').textContent = 'Playback: ' + spd.rate + 'x (' + spd.label + ')';
+      toast('Speed: ' + spd.label);
+    }
+
+    // Volume Boost cycle: 100% -> 150% -> 200% -> 300% -> 400%
+    const boosts = ['100%', '150%', '200%', '300%', '400%'];
+    let curBoostIdx = 0;
+    function cycleBoost() {
+      curBoostIdx = (curBoostIdx + 1) % boosts.length;
+      document.getElementById('setting-boost-val').textContent = boosts[curBoostIdx];
+      toast('Volume Boost: ' + boosts[curBoostIdx]);
+    }
+
+    // Subtitle Size cycle: 50% -> 75% -> 100% -> 125% -> 150% -> 200%
+    const subSizes = ['75%', '100%', '125%', '150%', '200%', '50%'];
+    let curSubSizeIdx = 0;
+    function cycleSubSize() {
+      curSubSizeIdx = (curSubSizeIdx + 1) % subSizes.length;
+      document.getElementById('setting-subsize-val').textContent = subSizes[curSubSizeIdx];
+      toast('Subtitle Size: ' + subSizes[curSubSizeIdx]);
+    }
+
+    // Subtitle Fonts cycle: Nunito -> Geist -> Arial -> Roboto -> Comic Sans
+    const fonts = ['Nunito', 'Geist', 'Arial', 'Roboto', 'Comic Sans'];
+    let curFontIdx = 0;
+    function cycleSubFont() {
+      curFontIdx = (curFontIdx + 1) % fonts.length;
+      document.getElementById('setting-subfont-val').textContent = fonts[curFontIdx];
+      toast('Subtitle Font: ' + fonts[curFontIdx]);
+    }
+
+    // Subtitle Color cycle: White -> Yellow -> Cyan -> Green -> Red
+    const colors = ['White', 'Yellow', 'Cyan', 'Green', 'Red'];
+    let curColorIdx = 0;
+    function cycleSubColor() {
+      curColorIdx = (curColorIdx + 1) % colors.length;
+      document.getElementById('setting-subcolor-val').textContent = colors[curColorIdx];
+      toast('Subtitle Colour: ' + colors[curColorIdx]);
+    }
+
+    function applyAspect(label, boxClass, idx) {
+      for (let i = 0; i <= 8; i++) {
+        const btn = document.getElementById(`asp-${i}`);
+        if (i === idx) {
+          btn.className = 'w-full text-left px-3.5 py-2.5 text-xs font-bold text-[#ff1e27] bg-[#ff1e27]/20 border-b border-white/5 transition flex items-center justify-between';
+          btn.innerHTML = `<span>${label}</span><span class="text-[10px] text-red-400">✓</span>`;
+        } else {
+          btn.className = 'w-full text-left px-3.5 py-2.5 text-xs font-medium text-gray-200 hover:bg-white/10 border-b border-white/5 transition';
+          btn.innerHTML = btn.textContent.replace('✓', '').trim();
+        }
+      }
+
+      const box = document.getElementById('aspect-preview-box');
+      box.className = `${boxClass} border-2 border-dashed border-red-500/60 rounded-lg flex items-center justify-center bg-red-500/5 transition-all duration-300 relative`;
+      document.getElementById('aspect-label-preview').textContent = label;
+      document.getElementById('active-mode-name').textContent = label;
+      document.getElementById('setting-aspect-val').textContent = label.split(' ')[0];
+      
+      toast(`Applied Aspect Ratio: ${label}`);
+      document.getElementById('aspect-menu-popup').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
