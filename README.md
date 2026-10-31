@@ -1,4 +1,4 @@
-![GitHub contributors](https://img.shields.io/github/contributors/Botsthe/AV-FILE-TO-LINK-PRO?style=flat&color=green)
+﻿![GitHub contributors](https://img.shields.io/github/contributors/Botsthe/AV-FILE-TO-LINK-PRO?style=flat&color=green)
 ![GitHub repo size](https://img.shields.io/github/repo-size/Botsthe/AV-FILE-TO-LINK-PRO?color=green)
 ![GitHub](https://img.shields.io/github/license/Botsthe/AV-FILE-TO-LINK-PRO?color=green)
 
@@ -127,7 +127,7 @@ premium_user      - List all premium users [FOR ADMINS ONLY]
 ### 🔹 DEPLOY ON RENDER
 
 <p><br>
-<a href="https://render.com/deploy?repo=https://github.com/Botsthe/AV-FILE-TO-LINK-PRO">
+<a href="https://render.com/deploy?repo=https://github.com/rockstaryohan/filetolinkultrapro">
 <img src="https://render.com/images/deploy-to-render-button.svg" alt="DEPLOY ON RENDER">
 </a></p>
 
