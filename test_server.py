@@ -77,9 +77,9 @@ class TestPlayerHandler(BaseHTTPRequestHandler):
 def run():
     server = HTTPServer(("0.0.0.0", PORT), TestPlayerHandler)
     print("=" * 60)
-    print(f"🚀 Direct Player Test Server running at:")
-    print(f"   👉 http://localhost:{PORT}")
-    print(f"   👉 http://127.0.0.1:{PORT}")
+    print("Direct Player Test Server running at:")
+    print(f"   * http://localhost:{PORT}")
+    print(f"   * http://127.0.0.1:{PORT}")
     print("=" * 60)
     print("Press Ctrl+C to stop the server.")
     try:
