@@ -93,7 +93,7 @@ elif environ.get('RENDER_EXTERNAL_URL'):
     render_url = environ.get('RENDER_EXTERNAL_URL').strip()
     URL = render_url if render_url.endswith('/') else f'{render_url}/'
 else:
-    FQDN = getenv('FQDN', '').strip()
+    FQDN = getenv('FQDN', 'https://filetolinkultrapro.onrender.com').strip()
     clean_fqdn = FQDN.rstrip('/')
     PORT_SEGMENT = '' if NO_PORT else f':{PORT}'
     PROTOCOL = 'https' if HAS_SSL else 'http'
