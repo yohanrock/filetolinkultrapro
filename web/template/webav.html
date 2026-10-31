@@ -109,13 +109,85 @@
     }
 
     .art-video-player.gd-touch .art-control-volume {
-      display: none !important;
+      display: flex !important;
     }
 
     .art-video-player.gd-narrow {
       --art-control-height: 36px;
       --art-padding: 6px;
       --art-control-icon-size: 28px;
+    }
+
+    /* Play Speed Pill */
+    .gd-speed-pill {
+      font: 700 12px/1 var(--sans);
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+    .art-control:hover .gd-speed-pill,
+    .gd-speed-pill:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    /* Floating Volume HUD (Like Play4u) */
+    .gd-vol-hud {
+      position: absolute;
+      top: 14%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(14, 18, 26, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      z-index: 95 !important;
+      opacity: 0;
+      pointer-events: none !important;
+      visibility: hidden;
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    }
+    .gd-vol-hud.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+    .gd-vol-hud .gd-vol-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+    .gd-vol-hud .gd-vol-text {
+      font: 700 13px/1 var(--sans);
+      color: #ffffff;
+      min-width: 82px;
+    }
+    .gd-vol-hud .gd-vol-bar {
+      width: 100px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .gd-vol-hud .gd-vol-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 0.08s ease;
     }
 
     .art-control-fullscreen-web {
@@ -2088,7 +2160,7 @@
         volume: store.get('volume', 1),
         autoplay: false,
         pip: false,
-        setting: true,
+        setting: false,
         playbackRate: false,
         aspectRatio: false,
         fullscreen: NATIVE_FS,
@@ -2109,9 +2181,17 @@
         },
         controls: [
           {
-            name: 'gd-audio',
+            name: 'gd-speed',
             position: 'right',
             index: 1,
+            html: '<span class="gd-speed-pill" title="Playback Speed">1×</span>',
+            tooltip: 'Play Speed',
+            click: () => toggleMenu('speed')
+          },
+          {
+            name: 'gd-audio',
+            position: 'right',
+            index: 2,
             html: '<i class="gd-ico">' + SVG_ICONS.headphones + '</i>',
             tooltip: 'Audio Track (A)',
             click: () => toggleMenu('audio')
@@ -2140,32 +2220,84 @@
             tooltip: 'Rotate Video',
             click: () => toggleRotate()
           } : null,
-        ].filter(Boolean),
-        settings: [
-          {
-            name: 'play-speed',
-            html: SVG_ICONS.playSpeed + ' Play Speed',
-            tooltip: 'Normal',
-            selector: [
-              { html: '0.5x', value: 0.5 },
-              { html: '0.75x', value: 0.75 },
-              { html: '<span style="color:#ff2a34;font-weight:700;">Normal</span>', value: 1, default: true },
-              { html: '1.25x', value: 1.25 },
-              { html: '1.5x', value: 1.5 },
-              { html: '2.0x', value: 2.0 }
-            ],
-            onSelect(item) {
-              art.playbackRate = item.value;
-              showToast(`Speed: ${item.value === 1 ? 'Normal' : item.value + 'x'}`);
-              return item.value === 1 ? 'Normal' : item.value + 'x';
-            }
-          }
-        ]
+        ].filter(Boolean)
       });
 
       const video = art.video;
       const playerEl = art.template.$player;
       const subs = createSubtitleLayer(art, playerEl);
+
+      // Volume HUD Overlay (Play4u style)
+      const volHud = document.createElement('div');
+      volHud.className = 'gd-vol-hud';
+      volHud.innerHTML = `
+        <div class="gd-vol-icon">🔊</div>
+        <div class="gd-vol-body">
+          <div class="gd-vol-text">Volume 100%</div>
+          <div class="gd-vol-bar"><div class="gd-vol-fill" style="width: 100%;"></div></div>
+        </div>
+      `;
+      playerEl.appendChild(volHud);
+
+      let volHudTimer = null;
+      function showVolumeHud(vol, isMuted) {
+        const icon = volHud.querySelector('.gd-vol-icon');
+        const text = volHud.querySelector('.gd-vol-text');
+        const fill = volHud.querySelector('.gd-vol-fill');
+        const pct = isMuted ? 0 : Math.round(vol * 100);
+
+        if (isMuted || pct === 0) {
+          icon.textContent = '🔇';
+          text.textContent = 'Muted';
+          fill.style.width = '0%';
+        } else if (pct < 35) {
+          icon.textContent = '🔈';
+          text.textContent = `Volume ${pct}%`;
+          fill.style.width = `${pct}%`;
+        } else if (pct < 70) {
+          icon.textContent = '🔉';
+          text.textContent = `Volume ${pct}%`;
+          fill.style.width = `${pct}%`;
+        } else {
+          icon.textContent = '🔊';
+          text.textContent = `Volume ${pct}%`;
+          fill.style.width = `${pct}%`;
+        }
+
+        volHud.classList.add('show');
+        clearTimeout(volHudTimer);
+        volHudTimer = setTimeout(() => {
+          volHud.classList.remove('show');
+        }, 1300);
+      }
+
+      video.addEventListener('volumechange', () => {
+        showVolumeHud(video.volume, video.muted);
+      });
+
+      // Play4u Time formatting: Hours and Minutes (H:MM:SS / HH:MM:SS)
+      function formatPlayTime(sec, forceHours = false) {
+        if (isNaN(sec) || sec < 0) sec = 0;
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = Math.floor(sec % 60);
+        if (forceHours || h > 0) {
+          return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }
+
+      function updatePlayTimeDisplay() {
+        const timeEl = playerEl.querySelector('.art-control-time');
+        if (!timeEl) return;
+        const cur = video.currentTime || 0;
+        const dur = (typeof art.duration === 'number' && !isNaN(art.duration) && art.duration > 0) ? art.duration : (video.duration || 0);
+        const forceHours = dur >= 3600 || cur >= 3600;
+        timeEl.innerHTML = `<span class="art-time-current">${formatPlayTime(cur, forceHours)}</span> / <span class="art-time-duration">${formatPlayTime(dur, forceHours)}</span>`;
+      }
+      video.addEventListener('timeupdate', updatePlayTimeDisplay);
+      video.addEventListener('loadedmetadata', updatePlayTimeDisplay);
+      video.addEventListener('durationchange', updatePlayTimeDisplay);
 
       // Responsive Control Bar
       if (IS_TOUCH) playerEl.classList.add('gd-touch');
@@ -2258,24 +2390,17 @@
       });
 
       function togglePlayback() {
-        try {
-          if (art.playing || (!video.paused && !video.ended)) {
-            art.pause();
-            video.pause();
-          } else {
-            const p = art.play();
-            if (p !== undefined && p && p.catch) {
-              p.catch(() => {
-                try { video.play(); } catch {}
-              });
-            }
-          }
-        } catch (err) {
-          if (video.paused) {
-            try { video.play(); } catch {}
-          } else {
-            try { video.pause(); } catch {}
-          }
+        if (video.paused || video.ended) {
+          const p = video.play();
+          if (p && p.catch) p.catch(() => {});
+          btnPlayPause.innerHTML = SVG_ICONS.pause;
+          playerEl.classList.add('art-state-play');
+          playerEl.classList.remove('art-state-pause');
+        } else {
+          video.pause();
+          btnPlayPause.innerHTML = SVG_ICONS.play;
+          playerEl.classList.remove('art-state-play');
+          playerEl.classList.add('art-state-pause');
         }
         showControls();
       }
@@ -2355,28 +2480,6 @@
         togglePlayback();
       });
 
-      btnRewind.addEventListener('pointerup', (e) => {
-        if (e.pointerType === 'touch') {
-          e.preventDefault();
-          e.stopPropagation();
-          doRewind();
-        }
-      });
-      btnForward.addEventListener('pointerup', (e) => {
-        if (e.pointerType === 'touch') {
-          e.preventDefault();
-          e.stopPropagation();
-          doForward();
-        }
-      });
-      btnPlayPause.addEventListener('pointerup', (e) => {
-        if (e.pointerType === 'touch') {
-          e.preventDefault();
-          e.stopPropagation();
-          togglePlayback();
-        }
-      });
-
       // Direct single click on video area (excluding controls, menus, center buttons)
       playerEl.addEventListener('click', (e) => {
         if (e.target.closest('.art-bottom, .art-top, .art-settings, .gd-menu, .help, .gd-center-controls, .gd-timeline-preview, .art-controls, .center-btn')) {
@@ -2454,9 +2557,8 @@
           previewWrap.style.left = clampedX + 'px';
           previewWrap.style.display = 'flex';
 
-          const mins = Math.floor(targetTime / 60);
-          const secs = Math.floor(targetTime % 60);
-          previewTimeEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+          const forceHours = dur >= 3600 || targetTime >= 3600;
+          previewTimeEl.textContent = formatPlayTime(targetTime, forceHours);
 
           // Live animated video preview playing around hovered time
           if (Math.abs(previewLoopStart - targetTime) > 1.2) {
@@ -2532,6 +2634,11 @@
         } catch (err) {
           console.warn('Track probe completed or fallback:', err);
         }
+        // Auto-select first or default subtitle if present
+        if (subItems.length > 0 && currentSub < 0) {
+          const defIdx = subItems.findIndex(s => s.track && (s.track.def || s.track.forced));
+          selectSub(defIdx >= 0 ? defIdx : 0);
+        }
         refreshControlButtons();
       })();
 
@@ -2539,7 +2646,14 @@
         const ab = art.controls['gd-audio'];
         if (ab) ab.style.display = audioItems.length > 0 ? '' : 'none';
         const sb = art.controls['gd-subs'];
-        if (sb) sb.style.opacity = currentSub >= 0 ? '1' : '0.75';
+        if (sb) {
+          sb.style.opacity = currentSub >= 0 ? '1' : '0.75';
+          if (currentSub >= 0 && subItems[currentSub]) {
+            sb.title = `Subtitles (${subItems[currentSub].label})`;
+          } else {
+            sb.title = 'Subtitles (Off)';
+          }
+        }
       }
 
       /* ==========================================================================
@@ -2704,7 +2818,41 @@
           return;
         }
 
-        // 2. Audio & Subtitle Menus
+        // 2. Playback Speed Menu (Play4u direct control)
+        if (which === 'speed') {
+          menuEl = document.createElement('div');
+          menuEl.className = 'gd-menu speed-menu';
+          menuEl.dataset.which = 'speed';
+
+          const h4 = document.createElement('h4');
+          h4.textContent = 'Playback Speed';
+          menuEl.appendChild(h4);
+
+          const speeds = [
+            { label: '0.5× (Slow)', val: 0.5 },
+            { label: '0.75×', val: 0.75 },
+            { label: '1.0× (Normal)', val: 1.0 },
+            { label: '1.25×', val: 1.25 },
+            { label: '1.5×', val: 1.5 },
+            { label: '2.0× (Fast)', val: 2.0 },
+          ];
+          speeds.forEach(sp => {
+            const isCur = Math.abs((video.playbackRate || 1) - sp.val) < 0.05;
+            menuEl.appendChild(createMenuItem({ label: sp.label }, isCur, () => {
+              video.playbackRate = sp.val;
+              art.playbackRate = sp.val;
+              const pill = playerEl.querySelector('.gd-speed-pill');
+              if (pill) pill.textContent = sp.val === 1 ? '1×' : sp.val + '×';
+              closeMenu();
+              showToast(`Speed: ${sp.val === 1 ? 'Normal' : sp.val + 'x'}`);
+            }));
+          });
+
+          playerEl.appendChild(menuEl);
+          return;
+        }
+
+        // 3. Audio & Subtitle Menus
         const items = which === 'audio' ? audioItems : subItems;
         const cur = which === 'audio' ? audioCur : currentSub;
 
@@ -3011,7 +3159,7 @@
 
       // Close menu on outside click
       document.addEventListener('pointerdown', (e) => {
-        if (menuEl && !menuEl.contains(e.target) && !e.target.closest('.art-control-gd-audio, .art-control-gd-subs, .art-control-aspect-ratio')) {
+        if (menuEl && !menuEl.contains(e.target) && !e.target.closest('.art-control-gd-audio, .art-control-gd-subs, .art-control-aspect-ratio, .art-control-gd-speed')) {
           closeMenu();
         }
       }, true);
