@@ -26,8 +26,8 @@
   <!-- Player and Custom Styles -->
   <style>
     :root {
-      --accent: #ff2a34;
-      --accent-hover: #e50914;
+      --accent: #10D68A;
+      --accent-hover: #0da66b;
       --bg-dark: #0a0c10;
       --panel-dark: #12151c;
       --card-dark: #161a23;
@@ -104,51 +104,130 @@
     .art-progress .art-control-progress-played {
       background: var(--accent) !important;
     }
-    /* Always-visible Volume Bar with Draggable Slider */
+    /* All Control Icons and Time in Mint Green #10D68A (HDStream4u Style) */
+    .art-video-player .art-bottom .art-controls .art-control,
+    .art-video-player .art-bottom .art-controls .art-control svg,
+    .art-video-player .art-bottom .art-controls .art-control .gd-ico svg,
+    .art-video-player .art-bottom .art-controls .art-control svg path,
+    .art-video-player .art-bottom .art-controls .art-control i,
+    .art-video-player .art-bottom .art-controls .art-control-time,
+    .art-video-player .art-bottom .art-controls .art-control-time span {
+      color: var(--accent) !important;
+      fill: var(--accent) !important;
+    }
+
+    /* Vertical Volume Slider Popover (Matches HDStream4u / JWPlayer Screenshot) */
     .art-control-volume {
+      position: relative !important;
       display: flex !important;
       align-items: center !important;
-      gap: 4px !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      padding: 0 6px !important;
     }
+
+    /* Hide Artplayer default horizontal slider */
     .art-video-player .art-bottom .art-controls .art-control-volume .art-volume-slider,
     .art-video-player.art-is-mobile .art-bottom .art-controls .art-control-volume .art-volume-slider,
     .art-control-volume .art-volume-slider {
-      display: flex !important;
-      align-items: center !important;
-      width: 66px !important;
-      height: 24px !important;
-      margin: 0 4px !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-      cursor: pointer !important;
-      touch-action: none !important;
+      display: none !important;
     }
-    .art-control-volume .art-volume-slider-inner {
-      width: 100% !important;
-      height: 4px !important;
-      background: rgba(255, 255, 255, 0.28) !important;
-      border-radius: 999px !important;
-      position: relative !important;
+
+    /* Green Underline Under Speaker Icon (as in user screenshot) */
+    .gd-vol-underline {
+      position: absolute;
+      bottom: 1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 2.5px;
+      background: var(--accent);
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
     }
-    .art-control-volume .art-volume-slider-handle {
-      background: var(--accent) !important;
-      height: 100% !important;
-      border-radius: 999px !important;
-      position: relative !important;
+    .art-control-volume.is-active .gd-vol-underline,
+    .art-control-volume.is-open .gd-vol-underline,
+    .art-control-volume:hover .gd-vol-underline {
+      opacity: 1;
     }
-    .art-control-volume .art-volume-slider-handle::after {
-      content: '' !important;
-      position: absolute !important;
-      right: -5px !important;
-      top: 50% !important;
-      transform: translateY(-50%) !important;
-      width: 12px !important;
-      height: 12px !important;
-      background: #ffffff !important;
-      border: 2px solid var(--accent) !important;
-      border-radius: 50% !important;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6) !important;
-      pointer-events: none !important;
+
+    /* Vertical Volume Popover Container (100% Functional on Android Touch & Desktop) */
+    .gd-volume-popover {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 44px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 0;
+      box-sizing: border-box;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      z-index: 120;
+      touch-action: none;
+    }
+
+    .art-control-volume.is-open .gd-volume-popover,
+    .art-control-volume:hover .gd-volume-popover,
+    .gd-volume-popover.is-dragging {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Vertical Track */
+    .gd-vol-track {
+      width: 3.5px;
+      height: 86px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    /* Expanded Touch Area for Easy Sliding on Android */
+    .gd-vol-track::before {
+      content: '';
+      position: absolute;
+      top: -14px;
+      bottom: -14px;
+      left: -20px;
+      right: -20px;
+    }
+
+    /* Mint Green Fill Bar from Bottom */
+    .gd-vol-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    /* Circular Mint Green Thumb Knob */
+    .gd-vol-thumb {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 14px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(16, 214, 138, 0.6);
+      pointer-events: none;
     }
 
     /* Strict Flexbox Order matching reference screenshot layout */
@@ -175,7 +254,7 @@
 
     .art-control-time {
       font: 500 13px/1 var(--mono, monospace) !important;
-      color: rgba(255, 255, 255, 0.9) !important;
+      color: var(--accent) !important;
       display: flex !important;
       align-items: center !important;
       gap: 3px !important;
@@ -449,15 +528,29 @@
     }
 
     .center-btn.center-clapper {
-      width: 66px;
-      height: 66px;
-      border-radius: 18px;
-      background: rgba(28, 33, 48, 0.84);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      color: #ffffff;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(18, 22, 34, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 2px solid rgba(16, 214, 138, 0.35);
+      color: var(--accent);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, border-color 0.2s ease;
+    }
+    .center-btn.center-clapper:hover {
+      transform: scale(1.12);
+      border-color: var(--accent);
+      background: rgba(18, 22, 34, 0.9);
+    }
+    .center-btn.center-clapper svg {
+      width: 36px;
+      height: 36px;
+      fill: var(--accent);
+    }
+    .center-btn.seek-circle {
+      display: none !important;
     }
     .center-btn.center-clapper svg {
       width: 32px;
@@ -1222,8 +1315,8 @@
       sub: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/></svg>',
       rotate: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zm-6.25-.77c-.59-.59-1.54-.59-2.12 0L1.75 8.11c-.59.59-.59 1.54 0 2.12l12.02 12.02c.59.59 1.54.59 2.12 0l6.36-6.36c.59-.59.59-1.54 0-2.12L10.23 1.75zm4.6 19.44L2.81 9.17l6.36-6.36 12.02 12.02-6.36 6.36zm-7.31.29C4.25 19.94 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33 1.32z"/></svg>',
       check: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>',
-      rewind10: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-4-4 4-4"/><path d="M5 10h11a4 4 0 1 1 0 8h-1"/><text x="11.5" y="13.5" font-size="6.5" font-weight="900" font-family="sans-serif" fill="currentColor" stroke="none" text-anchor="middle">10</text></svg>',
-      forward10: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l4-4-4-4"/><path d="M19 10H8a4 4 0 1 0 0 8h1"/><text x="12.5" y="13.5" font-size="6.5" font-weight="900" font-family="sans-serif" fill="currentColor" stroke="none" text-anchor="middle">10</text></svg>',
+      rewind10: '<svg viewBox="0 0 240 240" width="22" height="22" fill="currentColor"><path d="M113.2,131.078a21.589,21.589,0,0,0-17.7-10.6,21.589,21.589,0,0,0-17.7,10.6,44.769,44.769,0,0,0,0,46.3,21.589,21.589,0,0,0,17.7,10.6,21.589,21.589,0,0,0,17.7-10.6,44.769,44.769,0,0,0,0-46.3Zm-17.7,47.2c-7.8,0-14.4-11-14.4-24.1s6.6-24.1,14.4-24.1,14.4,11,14.4,24.1S103.4,178.278,95.5,178.278Zm-43.4,9.7v-51l-4.8,4.8-6.8-6.8,13-13a4.8,4.8,0,0,1,8.2,3.4v62.7l-9.6-.1Zm162-130.2v125.3a4.867,4.867,0,0,1-4.8,4.8H146.6v-19.3h48.2v-96.4H79.1v19.3c0,5.3-3.6,7.2-8,4.3l-41.8-27.9a6.013,6.013,0,0,1-2.7-8,5.887,5.887,0,0,1,2.7-2.7l41.8-27.9c4.4-2.9,8-1,8,4.3v19.3H209.2A4.974,4.974,0,0,1,214.1,57.778Z"/></svg>',
+      forward10: '<svg viewBox="0 0 240 240" width="22" height="22" fill="currentColor"><path d="m 25.993957,57.778 v 125.3 c 0.03604,2.63589 2.164107,4.76396 4.8,4.8 h 62.7 v -19.3 h -48.2 v -96.4 H 160.99396 v 19.3 c 0,5.3 3.6,7.2 8,4.3 l 41.8,-27.9 c 2.93574,-1.480087 4.13843,-5.04363 2.7,-8 -0.57502,-1.174985 -1.52502,-2.124979 -2.7,-2.7 l -41.8,-27.9 c -4.4,-2.9 -8,-1 -8,4.3 v 19.3 H 30.893957 c -2.689569,0.03972 -4.860275,2.210431 -4.9,4.9 z m 163.422413,73.04577 c -3.72072,-6.30626 -10.38421,-10.29683 -17.7,-10.6 -7.31579,0.30317 -13.97928,4.29374 -17.7,10.6 -8.60009,14.23525 -8.60009,32.06475 0,46.3 3.72072,6.30626 10.38421,10.29683 17.7,10.6 7.31579,-0.30317 13.97928,-4.29374 17.7,-10.6 8.60009,-14.23525 8.60009,-32.06475 0,-46.3 z m -17.7,47.2 c -7.8,0 -14.4,-11 -14.4,-24.1 0,-13.1 6.6,-24.1 14.4,-24.1 7.8,0 14.4,11 14.4,24.1 0,13.1 -6.5,24.1 -14.4,24.1 z m -47.77056,9.72863 v -51 l -4.8,4.8 -6.8,-6.8 13,-12.99999 c 3.02543,-3.03598 8.21053,-0.88605 8.2,3.4 v 62.69999 z"/></svg>',
       clapper: '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>',
       aspectRatio: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/></svg>',
       addSub: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/></svg>',
@@ -2017,62 +2110,153 @@
         }, 1300);
       }
 
-      // Interactive Volume Slider Support (Touch, Pointer, Click for Mobile, TV & Desktop)
+      // Vertical Volume Slider Support (Touch, Pointer, Drag for Android, TV & Desktop)
       function initVolumeSlider() {
         const volCtrl = playerEl.querySelector('.art-control-volume');
         if (!volCtrl) return;
-        const slider = volCtrl.querySelector('.art-volume-slider');
-        if (!slider) return;
-        const inner = volCtrl.querySelector('.art-volume-slider-inner') || slider;
-        const handle = volCtrl.querySelector('.art-volume-slider-handle');
 
-        function setVolumeFromPointer(e) {
-          const rect = inner.getBoundingClientRect();
-          if (!rect.width) return;
-          const clientX = e.clientX != null ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-          const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        // Ensure vertical popover exists
+        let popover = volCtrl.querySelector('.gd-volume-popover');
+        if (!popover) {
+          popover = document.createElement('div');
+          popover.className = 'gd-volume-popover';
+          popover.innerHTML = `
+            <div class="gd-vol-track">
+              <div class="gd-vol-fill">
+                <div class="gd-vol-thumb"></div>
+              </div>
+            </div>
+          `;
+          volCtrl.appendChild(popover);
+        }
+
+        // Ensure green underline indicator exists under speaker icon
+        let underline = volCtrl.querySelector('.gd-vol-underline');
+        if (!underline) {
+          underline = document.createElement('div');
+          underline.className = 'gd-vol-underline';
+          volCtrl.appendChild(underline);
+        }
+
+        const track = popover.querySelector('.gd-vol-track');
+        const fill = popover.querySelector('.gd-vol-fill');
+
+        let hideTimer = null;
+        function openPopover() {
+          clearTimeout(hideTimer);
+          volCtrl.classList.add('is-open', 'is-active');
+        }
+
+        function scheduleClose() {
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => {
+            if (!isDragging) {
+              volCtrl.classList.remove('is-open');
+            }
+          }, 2800);
+        }
+
+        function setVolumeFromY(clientY) {
+          const rect = track.getBoundingClientRect();
+          if (!rect.height) return;
+          const diff = rect.bottom - clientY;
+          const ratio = Math.max(0, Math.min(1, diff / rect.height));
           video.volume = ratio;
           video.muted = (ratio === 0);
           try { art.volume = ratio; } catch {}
-          if (handle) handle.style.width = (ratio * 100) + '%';
+          syncSlider();
           showVolumeHud(ratio, video.muted);
         }
 
+        function syncSlider() {
+          const v = video.muted ? 0 : (typeof video.volume === 'number' ? video.volume : 1);
+          if (fill) fill.style.height = (v * 100) + '%';
+          volCtrl.classList.toggle('is-muted', video.muted || v === 0);
+          volCtrl.classList.toggle('is-active', !video.muted && v > 0);
+        }
+
         let isDragging = false;
-        slider.addEventListener('pointerdown', (e) => {
+        function onPointerDown(e) {
           e.stopPropagation();
           e.preventDefault();
           isDragging = true;
-          try { slider.setPointerCapture(e.pointerId); } catch {}
-          setVolumeFromPointer(e);
-        });
+          popover.classList.add('is-dragging');
+          volCtrl.classList.add('is-open');
+          try { popover.setPointerCapture(e.pointerId); } catch {}
+          setVolumeFromY(e.clientY);
+        }
 
-        slider.addEventListener('pointermove', (e) => {
+        function onPointerMove(e) {
           if (isDragging) {
             e.stopPropagation();
             e.preventDefault();
-            setVolumeFromPointer(e);
+            setVolumeFromY(e.clientY);
+          }
+        }
+
+        function onPointerUp(e) {
+          if (isDragging) {
+            isDragging = false;
+            popover.classList.remove('is-dragging');
+            try { popover.releasePointerCapture(e.pointerId); } catch {}
+            scheduleClose();
+          }
+        }
+
+        popover.addEventListener('pointerdown', onPointerDown);
+        popover.addEventListener('pointermove', onPointerMove);
+        popover.addEventListener('pointerup', onPointerUp);
+        popover.addEventListener('pointercancel', onPointerUp);
+
+        // Tap/click handler on Speaker Icon
+        volCtrl.addEventListener('click', (e) => {
+          if (e.target.closest('.gd-volume-popover')) return;
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (!volCtrl.classList.contains('is-open')) {
+            openPopover();
+            scheduleClose();
+          } else {
+            // Toggle mute/unmute
+            video.muted = !video.muted;
+            try { art.muted = video.muted; } catch {}
+            syncSlider();
+            showVolumeHud(video.volume, video.muted);
+            scheduleClose();
           }
         });
 
-        const stopDrag = (e) => {
-          if (isDragging) {
-            isDragging = false;
-            try { slider.releasePointerCapture(e.pointerId); } catch {}
-          }
-        };
-        slider.addEventListener('pointerup', stopDrag);
-        slider.addEventListener('pointercancel', stopDrag);
+        // Desktop hover
+        volCtrl.addEventListener('mouseenter', openPopover);
+        volCtrl.addEventListener('mouseleave', () => {
+          if (!isDragging) scheduleClose();
+        });
 
-        const syncHandle = () => {
-          if (handle) {
-            const v = video.muted ? 0 : (video.volume ?? 1);
-            handle.style.width = (v * 100) + '%';
+        // Mouse wheel adjustment
+        volCtrl.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const step = e.deltaY < 0 ? 0.05 : -0.05;
+          const newVol = Math.max(0, Math.min(1, (video.volume || 0) + step));
+          video.volume = newVol;
+          video.muted = (newVol === 0);
+          syncSlider();
+          openPopover();
+          scheduleClose();
+          showVolumeHud(newVol, video.muted);
+        }, { passive: false });
+
+        // Close on tap outside
+        document.addEventListener('pointerdown', (e) => {
+          if (!volCtrl.contains(e.target)) {
+            volCtrl.classList.remove('is-open');
           }
-        };
-        video.addEventListener('volumechange', syncHandle);
-        art.on('video:volumechange', syncHandle);
-        syncHandle();
+        });
+
+        video.addEventListener('volumechange', syncSlider);
+        art.on('video:volumechange', syncSlider);
+        syncSlider();
       }
       setTimeout(initVolumeSlider, 60);
 
@@ -2129,23 +2313,15 @@
       const centerOverlay = document.createElement('div');
       centerOverlay.className = 'gd-center-controls';
       centerOverlay.innerHTML = `
-        <button class="center-btn seek-circle seek-rewind" type="button" title="Rewind 10s (←)" aria-label="Rewind 10s">
-          ${SVG_ICONS.rewind10}
-          <span class="center-btn-text">10</span>
-        </button>
         <button class="center-btn center-clapper" type="button" title="Play / Pause (Space)" aria-label="Play or Pause">
           ${SVG_ICONS.play}
-        </button>
-        <button class="center-btn seek-circle seek-forward" type="button" title="Forward 10s (→)" aria-label="Forward 10s">
-          ${SVG_ICONS.forward10}
-          <span class="center-btn-text">10</span>
         </button>
       `;
       playerEl.appendChild(centerOverlay);
 
-      const btnRewind = centerOverlay.querySelector('.seek-rewind');
+      const btnRewind = null;
       const btnPlayPause = centerOverlay.querySelector('.center-clapper');
-      const btnForward = centerOverlay.querySelector('.seek-forward');
+      const btnForward = null;
 
       /* ==========================================================================
          AUTO-HIDE CONTROLS & CURSOR CONTROLLER
@@ -2271,12 +2447,12 @@
         showControls();
       }
 
-      btnRewind.addEventListener('click', (e) => {
+      if (btnRewind) btnRewind.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         doRewind();
       });
-      btnForward.addEventListener('click', (e) => {
+      if (btnForward) btnForward.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         doForward();
