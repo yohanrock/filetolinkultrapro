@@ -8,7 +8,7 @@ SESSION = environ.get('SESSION', 'Webavbot')  # Pyrogram client session name
 
 API_ID = int(environ.get('API_ID', '1220805'))  # Telegram API ID
 API_HASH = environ.get('API_HASH', 'b01d18cba6e1b7f206cc2d3d415ceed1')  # Telegram API Hash
-BOT_TOKEN = environ.get('BOT_TOKEN', '6281149973:AAF5kn_ZAmVxLc_UWTW3VBMvl7K-_x0vhZw')  # Telegram Bot Token
+BOT_TOKEN = environ.get('BOT_TOKEN', '')  # Telegram Bot Token
 
 # 👑, Channels & Logs
 BIN_CHANNEL = int(environ.get("BIN_CHANNEL", '-1002823015135'))  # File storage channel
@@ -23,7 +23,7 @@ AUTH_CHANNEL = list(map(int, environ.get("AUTH_CHANNEL", "-1001759223130").split
 
 # username add without @
 OWNER_USERNAME = environ.get("OWNER_USERNAME", 'Keepmessage_bot')  # Owner's username
-BOT_USERNAME = environ.get("BOT_USERNAME", 'Leech4GRobot')  # Bot's username
+BOT_USERNAME = environ.get("BOT_USERNAME", 'LeechUploadBot')  # Bot's username
 
 # 🔗 Channel & Support Links
 CHANNEL = environ.get('CHANNEL', 'https://t.me/Infinity_movies_updates')  # Updates channel
@@ -93,7 +93,7 @@ elif environ.get('RENDER_EXTERNAL_URL'):
     render_url = environ.get('RENDER_EXTERNAL_URL').strip()
     URL = render_url if render_url.endswith('/') else f'{render_url}/'
 else:
-    FQDN = getenv('FQDN', 'pro-rockstar.mummy16.workers.dev').strip()
+    FQDN = getenv('FQDN', '').strip()
     clean_fqdn = FQDN.rstrip('/')
     PORT_SEGMENT = '' if NO_PORT else f':{PORT}'
     PROTOCOL = 'https' if HAS_SSL else 'http'
