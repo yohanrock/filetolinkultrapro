@@ -15,6 +15,10 @@ import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 
+# Ensure UTF-8 output on Windows console without crashes
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 PORT = 8080
 TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "template", "webav.html")
 
@@ -71,8 +75,12 @@ class TestPlayerHandler(BaseHTTPRequestHandler):
         self.wfile.write(content.encode("utf-8"))
 
     def log_message(self, format, *args):
-        # Clean logging
-        print(f"[{self.log_date_time_string()}] {args[0]}")
+        # Safe console logging
+        try:
+            msg = str(args[0]) if args else ''
+            print(f"[{self.log_date_time_string()}] {msg}")
+        except Exception:
+            pass
 
 def run():
     server = HTTPServer(("0.0.0.0", PORT), TestPlayerHandler)
