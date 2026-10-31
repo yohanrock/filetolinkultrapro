@@ -63,7 +63,7 @@ BATCH_FILE_CAPTION = environ.get('BATCH_FILE_CAPTION', f"{script.CAPTION}")  # C
 CHANNEL_FILE_CAPTION = environ.get('CHANNEL_FILE_CAPTION', f"{script.CAPTION}")  # Caption for channel posts
 
 # ⏱️ Time & Rate Limit Settings
-PING_INTERVAL = int(environ.get("PING_INTERVAL", "1200"))  # Ping interval in seconds (20 minutes)
+PING_INTERVAL = int(environ.get("PING_INTERVAL", "600"))  # Ping interval in seconds (10 minutes)
 SLEEP_THRESHOLD = int(getenv('SLEEP_THRESHOLD', '60'))  # Threshold for sleep delay
 RATE_LIMIT_TIMEOUT = int(environ.get("RATE_LIMIT_TIMEOUT", "600"))  # Rate limit time (10 mins)
 MAX_FILES = int(environ.get("MAX_FILES", "5"))  # Max files allowed per user
@@ -75,19 +75,26 @@ MULTI_CLIENT = False  # Enable multi-client handling (if needed)
 
 # 🔧 App/Heroku Configuration
 name = str(environ.get('name', 'FileTolink'))  # Project name
-APP_NAME = None
-if 'DYNO' in environ:
-    ON_HEROKU = True
-    APP_NAME = str(getenv('APP_NAME'))  # Heroku app name (optional)
-else:
-    ON_HEROKU = False
+APP_NAME = str(getenv('APP_NAME', '')) if 'DYNO' in environ else None
+ON_HEROKU = 'DYNO' in environ
+ON_RENDER = 'RENDER' in environ or 'RENDER_EXTERNAL_URL' in environ
 
-# 🌐 Server Settings
-PORT = int(getenv('PORT', '2626'))  # Port for web server
-NO_PORT = str(getenv("NO_PORT", True)).lower() in ("true", "1", "yes")  # Disable port in URL
-HAS_SSL = str(getenv("HAS_SSL", True)).lower() in ("true", "1", "yes")  # Use HTTPS if True
-BIND_ADDRESS = getenv("WEB_SERVER_BIND_ADDRESS", "127.0.0.1")  # Server bind address
-FQDN = getenv("FQDN", "pro-rockstar.mummy16.workers.dev/") or BIND_ADDRESS  # Full domain name or fallback to bind address
-PORT_SEGMENT = "" if NO_PORT else f":{PORT}/"  # Port in URL if not disabled
-PROTOCOL = "https" if HAS_SSL else "http"  # Protocol for URL
-URL = f"{PROTOCOL}://{FQDN}{PORT_SEGMENT}"  # Final generated base URL
+# ðŸŒ Server Settings
+PORT = int(getenv('PORT', '2626'))  # Port for web server (Render provides 10000 via $PORT)
+NO_PORT = str(getenv('NO_PORT', True)).lower() in ('true', '1', 'yes')  # Disable port in URL
+HAS_SSL = str(getenv('HAS_SSL', True)).lower() in ('true', '1', 'yes')  # Use HTTPS if True
+BIND_ADDRESS = getenv('WEB_SERVER_BIND_ADDRESS', '0.0.0.0')  # Server bind address
+
+# Dynamic URL detection (Priority: URL > RENDER_EXTERNAL_URL > FQDN)
+if environ.get('URL'):
+    custom_url = environ.get('URL').strip()
+    URL = custom_url if custom_url.endswith('/') else f'{custom_url}/'
+elif environ.get('RENDER_EXTERNAL_URL'):
+    render_url = environ.get('RENDER_EXTERNAL_URL').strip()
+    URL = render_url if render_url.endswith('/') else f'{render_url}/'
+else:
+    FQDN = getenv('FQDN', 'pro-rockstar.mummy16.workers.dev').strip()
+    clean_fqdn = FQDN.rstrip('/')
+    PORT_SEGMENT = '' if NO_PORT else f':{PORT}'
+    PROTOCOL = 'https' if HAS_SSL else 'http'
+    URL = f'{PROTOCOL}://{clean_fqdn}{PORT_SEGMENT}/'

@@ -1,4 +1,4 @@
-import os, sys, glob, pytz, asyncio, logging, importlib
+﻿import os, sys, glob, pytz, asyncio, logging, importlib
 from pathlib import Path
 from pyrogram import idle
 
@@ -54,7 +54,7 @@ async def start():
 #This Repo Is By @BOT_OWNER26 
 # For Any Kind Of Error Ask Us In Support Group @AV_SUPPORT_GROUP
     
-    if ON_HEROKU:
+    if ON_HEROKU or ON_RENDER:
         asyncio.create_task(ping_server())
     me = await Webavbot.get_me()
     temp.BOT = Webavbot
@@ -73,6 +73,7 @@ async def start():
     await app.setup()
     bind_address = "0.0.0.0"
     await web.TCPSite(app, bind_address, PORT).start()
+    logging.info(f"------------------- Web Server Started on {bind_address}:{PORT} -------------------")
     await idle()
 
 #Dont Remove My Credit @AV_BOTz_UPDATE 

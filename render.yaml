@@ -1,7 +1,39 @@
 services:
-  - name: AV-FILE-TO-LINK-PRO
-    type: web
-    env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python bot.py"
+  - type: web
+    name: filetolinkultrapro
+    runtime: python
     plan: free
+    buildCommand: "pip install -U -r requirements.txt"
+    startCommand: "python bot.py"
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.14
+      - key: BOT_TOKEN
+        sync: false
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BIN_CHANNEL
+        sync: false
+      - key: LOG_CHANNEL
+        sync: false
+      - key: ADMINS
+        sync: false
+      - key: DATABASE_URI
+        sync: false
+      - key: DATABASE_NAME
+        value: cluster0
+      - key: OWNER_USERNAME
+        sync: false
+      - key: BOT_USERNAME
+        sync: false
+      - key: NO_PORT
+        value: "True"
+      - key: HAS_SSL
+        value: "True"
+      - key: PING_INTERVAL
+        value: "600"
+      - key: WEB_SERVER_BIND_ADDRESS
+        value: "0.0.0.0"
