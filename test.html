@@ -131,24 +131,12 @@
       fill: #ffffff;
     }
 
-    /* Volume Boost Badge */
-    .art-control-volume .gd-boost {
-      font: 700 11px/1 var(--mono);
-      color: var(--accent);
-      margin-left: 4px;
-      align-self: center;
-      pointer-events: none;
-    }
-    .art-control-volume .gd-boost:empty {
-      display: none;
-    }
-
     /* Subtitles Layer */
     .gd-sub {
       position: absolute;
       inset: 0;
-      pointer-events: none;
-      z-index: 25;
+      pointer-events: none !important;
+      z-index: 55 !important;
       --sub-base: 22px;
       --sub-scale: 0.75;
       --sub-font: 'Nunito', Arial, sans-serif;
@@ -164,6 +152,8 @@
       align-items: center;
       gap: 3px;
       text-align: center;
+      pointer-events: none !important;
+      z-index: 56 !important;
     }
     .gd-sub .bot {
       bottom: 7%;
@@ -1342,7 +1332,7 @@
       return { buf, e };
     }
 
-    const HEAD_BYTES = 262144;
+    const HEAD_BYTES = 1048576; // 1MB to reliably cover EBML/Tracks/SeekHead
     const probeCache = {};
 
     async function mkvProbe(url) {
@@ -1387,6 +1377,21 @@
         }
         if (info.seeks[ID.Cues] != null) info.cuesPos = info.segStart + info.seeks[ID.Cues];
         if (info.firstCluster == null && info.seeks[ID.Cluster] != null) info.firstCluster = info.segStart + info.seeks[ID.Cluster];
+
+        // Fallback: search for first cluster signature in head if not found via SeekHead
+        if (info.firstCluster == null) {
+          for (let i = seg.data; i < head.length - 4; i++) {
+            if (head[i] === 0x1F && head[i + 1] === 0x43 && head[i + 2] === 0xB6 && head[i + 3] === 0x75) {
+              info.firstCluster = i;
+              break;
+            }
+          }
+        }
+        // Final fallback: cluster begins immediately after segment data header
+        if (info.firstCluster == null) {
+          info.firstCluster = seg.data + 4096;
+        }
+
         info.tsSec = info.timescale / 1e9;
         return info;
       })();
@@ -1511,9 +1516,10 @@
     }
 
     function parseStamp(s) {
-      const m = String(s).trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:[.,](\d{1,3}))?$/);
+      const m = String(s).trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:[.,](\d+))?$/);
       if (!m) return null;
-      return (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) + (m[4] ? +(m[4] + '00').slice(0, 3) / 1000 : 0);
+      const frac = m[4] ? parseFloat('0.' + m[4]) : 0;
+      return (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) + frac;
     }
 
     function parseSrtVtt(raw) {
@@ -1529,7 +1535,7 @@
         const c = makeCue(s, e, lines.slice(i + 1).join('\n'));
         if (c) out.push(c);
       }
-      return out;
+      return out.sort((a, b) => a.start - b.start);
     }
 
     function parseAssFile(raw) {
@@ -1552,93 +1558,143 @@
       return out.sort((a, b) => a.start - b.start);
     }
 
+    function cleanAssText(raw) {
+      // In Matroska ASS/SSA blocks:
+      // "ReadOrder, Layer, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+      // There are 8 commas preceding the actual dialogue text.
+      let text = raw;
+      let commaCount = 0;
+      let idx = -1;
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] === ',') {
+          commaCount++;
+          if (commaCount === 8) {
+            idx = i + 1;
+            break;
+          }
+        }
+      }
+      if (idx !== -1) {
+        text = text.slice(idx);
+      }
+      return text;
+    }
+
     function embeddedSource(info, track, url) {
       const cues = [];
       let dead = false;
       const trackNum = track.number;
       const tsSec = info.tsSec || 0.001;
+      const isAss = /ASS|SSA/i.test(track.codec || '');
 
       (async () => {
         try {
-          const startPos = info.firstCluster;
-          if (!startPos) return;
-
-          let offset = startPos;
-          const chunkSize = 1024 * 1024 * 2; // 2MB
-          const maxScan = 35 * 1024 * 1024; // Scan up to 35MB of stream
+          let filePos = info.firstCluster || 0;
+          const chunkSize = 2 * 1024 * 1024; // 2MB
+          const maxScan = 50 * 1024 * 1024; // Scan up to 50MB of stream
           let scanned = 0;
+          let leftover = new Uint8Array(0);
+          let curClusterTs = 0;
 
           while (!dead && scanned < maxScan) {
-            const buf = await fetchRange(url, offset, offset + chunkSize - 1).catch(() => null);
-            if (!buf || buf.length === 0) break;
+            const chunk = await fetchRange(url, filePos, filePos + chunkSize - 1).catch(() => null);
+            if (!chunk || chunk.length === 0) break;
+            filePos += chunk.length;
+            scanned += chunk.length;
 
-            let p = 0;
-            let curClusterTs = 0;
-
-            while (p + 4 < buf.length && !dead) {
-              const el = hdr(buf, p);
-              if (!el) { p++; continue; }
-
-              if (el.id === ID.Cluster) {
-                const cEnd = Math.min(el.end, buf.length);
-                let cp = el.data;
-                while (cp + 4 < cEnd && !dead) {
-                  const ch = hdr(buf, cp);
-                  if (!ch) { cp++; continue; }
-
-                  if (ch.id === ID.Timestamp) {
-                    curClusterTs = uint(buf, ch.data, ch.size);
-                  } else if (ch.id === ID.SimpleBlock || ch.id === ID.Block) {
-                    const bt = readVint(buf, ch.data);
-                    if (bt && bt.v === trackNum) {
-                      const relOff = ch.data + bt.len;
-                      const relTime = (buf[relOff] << 8) | buf[relOff + 1];
-                      const sRelTime = relTime > 32767 ? relTime - 65536 : relTime;
-                      const sTime = (curClusterTs + sRelTime) * tsSec;
-                      const txtStart = relOff + 3;
-                      const txtEnd = ch.end;
-                      if (txtEnd > txtStart && txtEnd <= buf.length) {
-                        const raw = str(buf, txtStart, txtEnd - txtStart);
-                        const c = makeCue(sTime, sTime + 3.5, raw);
-                        if (c) insertCue(cues, c);
-                      }
-                    }
-                  } else if (ch.id === ID.BlockGroup) {
-                    let bp = ch.data;
-                    let dur = 3.5;
-                    const bgEnd = Math.min(ch.end, buf.length);
-                    while (bp + 4 < bgEnd && !dead) {
-                      const bch = hdr(buf, bp);
-                      if (!bch) { bp++; continue; }
-                      if (bch.id === ID.BlockDuration) {
-                        dur = (uint(buf, bch.data, bch.size) || 3500) * tsSec;
-                      } else if (bch.id === ID.Block) {
-                        const bt = readVint(buf, bch.data);
-                        if (bt && bt.v === trackNum) {
-                          const relOff = bch.data + bt.len;
-                          const relTime = (buf[relOff] << 8) | buf[relOff + 1];
-                          const sRelTime = relTime > 32767 ? relTime - 65536 : relTime;
-                          const sTime = (curClusterTs + sRelTime) * tsSec;
-                          const txtStart = relOff + 3;
-                          const txtEnd = bch.end;
-                          if (txtEnd > txtStart && txtEnd <= buf.length) {
-                            const raw = str(buf, txtStart, txtEnd - txtStart);
-                            const c = makeCue(sTime, sTime + dur, raw);
-                            if (c) insertCue(cues, c);
-                          }
-                        }
-                      }
-                      bp = bch.end;
-                    }
-                  }
-                  cp = ch.end;
-                }
-              }
-              p = el.end;
+            let buf;
+            if (leftover.length > 0) {
+              buf = new Uint8Array(leftover.length + chunk.length);
+              buf.set(leftover);
+              buf.set(chunk, leftover.length);
+              leftover = new Uint8Array(0);
+            } else {
+              buf = chunk;
             }
 
-            offset += chunkSize;
-            scanned += chunkSize;
+            let p = 0;
+            while (p + 4 < buf.length && !dead) {
+              const el = hdr(buf, p);
+              if (!el) {
+                p++;
+                continue;
+              }
+
+              // Cluster container: step inside
+              if (el.id === ID.Cluster) {
+                p = el.data;
+                continue;
+              }
+
+              // Element is truncated by end of buffer
+              if (el.end > buf.length || el.end === Infinity) {
+                break;
+              }
+
+              if (el.id === ID.Timestamp) {
+                curClusterTs = uint(buf, el.data, el.size);
+                p = el.end;
+              } else if (el.id === ID.SimpleBlock || el.id === ID.Block) {
+                const bt = readVint(buf, el.data);
+                if (bt && bt.v === trackNum) {
+                  const relOff = el.data + bt.len;
+                  if (relOff + 3 <= el.end) {
+                    const relTime = (buf[relOff] << 8) | buf[relOff + 1];
+                    const sRelTime = relTime > 32767 ? relTime - 65536 : relTime;
+                    const sTime = (curClusterTs + sRelTime) * tsSec;
+                    const txtStart = relOff + 3;
+                    const txtEnd = el.end;
+                    if (txtEnd > txtStart) {
+                      let raw = str(buf, txtStart, txtEnd - txtStart);
+                      if (isAss) raw = cleanAssText(raw);
+                      const c = makeCue(sTime, sTime + 3.5, raw);
+                      if (c) insertCue(cues, c);
+                    }
+                  }
+                }
+                p = el.end;
+              } else if (el.id === ID.BlockGroup) {
+                let bp = el.data;
+                let dur = 3.5;
+                const bgEnd = Math.min(el.end, buf.length);
+                while (bp + 4 < bgEnd && !dead) {
+                  const bch = hdr(buf, bp);
+                  if (!bch || bch.end > bgEnd) break;
+                  if (bch.id === ID.BlockDuration || bch.id === 0x8B) {
+                    dur = (uint(buf, bch.data, bch.size) || 3500) * tsSec;
+                  } else if (bch.id === ID.Block) {
+                    const bt = readVint(buf, bch.data);
+                    if (bt && bt.v === trackNum) {
+                      const relOff = bch.data + bt.len;
+                      if (relOff + 3 <= bch.end) {
+                        const relTime = (buf[relOff] << 8) | buf[relOff + 1];
+                        const sRelTime = relTime > 32767 ? relTime - 65536 : relTime;
+                        const sTime = (curClusterTs + sRelTime) * tsSec;
+                        const txtStart = relOff + 3;
+                        const txtEnd = bch.end;
+                        if (txtEnd > txtStart) {
+                          let raw = str(buf, txtStart, txtEnd - txtStart);
+                          if (isAss) raw = cleanAssText(raw);
+                          const c = makeCue(sTime, sTime + dur, raw);
+                          if (c) insertCue(cues, c);
+                        }
+                      }
+                    }
+                  }
+                  bp = bch.end;
+                }
+                p = el.end;
+              } else {
+                p = el.end;
+              }
+            }
+
+            // Save leftover bytes across chunk boundaries
+            if (p < buf.length && buf.length - p < 2 * 1024 * 1024) {
+              leftover = buf.subarray(p);
+            } else {
+              leftover = new Uint8Array(0);
+            }
           }
         } catch (e) {
           console.warn('MKV subtitle scan warning:', e);
@@ -1998,83 +2054,7 @@
     }
 
     /* ==========================================================================
-       8. AUDIO CONTEXT 400% VOLUME BOOST
-       ========================================================================== */
-    function setupVolumeBoost(video) {
-      let boost = 1;
-      let actx = null;
-      let gainNode = null;
-      let compressor = null;
-
-      function getGraph() {
-        if (gainNode) return true;
-        try {
-          const AC = window.AudioContext || window.webkitAudioContext;
-          if (!AC) return false;
-          if (!actx) actx = new AC();
-          if (!video._audioSourceNode) {
-            video._audioSourceNode = actx.createMediaElementSource(video);
-          }
-          gainNode = actx.createGain();
-          gainNode.gain.setValueAtTime(boost, actx.currentTime);
-
-          compressor = actx.createDynamicsCompressor();
-          compressor.threshold.setValueAtTime(-10, actx.currentTime);
-          compressor.knee.setValueAtTime(24, actx.currentTime);
-          compressor.ratio.setValueAtTime(10, actx.currentTime);
-          compressor.attack.setValueAtTime(0.003, actx.currentTime);
-          compressor.release.setValueAtTime(0.25, actx.currentTime);
-
-          video._audioSourceNode.connect(gainNode);
-          gainNode.connect(compressor);
-          compressor.connect(actx.destination);
-
-          const wake = () => { if (actx && actx.state !== 'running' && !video.paused) actx.resume().catch(() => {}); };
-          video.addEventListener('play', wake);
-          return true;
-        } catch (e) {
-          console.warn('Volume boost graph error:', e);
-          return false;
-        }
-      }
-
-      return {
-        setLevel(L, art, badge) {
-          L = Math.max(0, Math.min(4, Math.round(L * 100) / 100));
-          boost = L;
-          if (L > 1) {
-            art.volume = 1;
-            if (getGraph()) {
-              if (actx && actx.state !== 'running') actx.resume().catch(() => {});
-              gainNode.gain.setValueAtTime(L, actx.currentTime);
-            }
-          } else {
-            if (gainNode && actx) {
-              gainNode.gain.setValueAtTime(1, actx.currentTime);
-            }
-            art.volume = L;
-          }
-          if (L > 0) art.muted = false;
-          if (badge) badge.textContent = L > 1 ? Math.round(L * 100) + '%' : '';
-          showToast(`🔊 Volume ${Math.round(L * 100)}%`);
-        },
-        step(dir, art, badge) {
-          const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4];
-          let current = (boost > 1) ? boost : 1;
-          let idx = 0;
-          let minDiff = 999;
-          steps.forEach((s, i) => {
-            const diff = Math.abs(s - current);
-            if (diff < minDiff) { minDiff = diff; idx = i; }
-          });
-          const nextIdx = dir > 0 ? Math.min(steps.length - 1, idx + 1) : Math.max(0, idx - 1);
-          this.setLevel(steps[nextIdx], art, badge);
-        }
-      };
-    }
-
-    /* ==========================================================================
-       9. MAIN ARTPLAYER SETUP
+       8. MAIN ARTPLAYER SETUP
        ========================================================================== */
     document.addEventListener("DOMContentLoaded", async () => {
       const container = document.getElementById('artplayer-container');
@@ -2179,16 +2159,6 @@
               showToast(`Speed: ${item.value === 1 ? 'Normal' : item.value + 'x'}`);
               return item.value === 1 ? 'Normal' : item.value + 'x';
             }
-          },
-          {
-            name: 'gd-boost',
-            html: SVG_ICONS.volBoost + ' Volume boost',
-            tooltip: '100%',
-            selector: [1, 1.5, 2, 2.5, 3, 3.5, 4].map(v => ({ html: v === 1 ? 'Off (100%)' : Math.round(v * 100) + '%', value: v, default: v === 1 })),
-            onSelect(item) {
-              volBooster.setLevel(item.value, art, boostBadge);
-              return Math.round(item.value * 100) + '%';
-            }
           }
         ]
       });
@@ -2196,13 +2166,6 @@
       const video = art.video;
       const playerEl = art.template.$player;
       const subs = createSubtitleLayer(art, playerEl);
-      const volBooster = setupVolumeBoost(video);
-
-      // Volume Boost Badge
-      const boostBadge = document.createElement('span');
-      boostBadge.className = 'gd-boost';
-      const volCtl = playerEl.querySelector('.art-control-volume');
-      if (volCtl) volCtl.appendChild(boostBadge);
 
       // Responsive Control Bar
       if (IS_TOUCH) playerEl.classList.add('gd-touch');
@@ -2519,25 +2482,34 @@
 
       (async () => {
         try {
-          if (isMatroska) {
-            mkv = await mkvProbe(FILE_URL);
-            const auds = mkv.tracks.filter(t => t.type === 2);
-            audioItems = auds.map((t, i) => ({
-              label: t.name || langName(t.lang) || `Audio ${i + 1}`,
-              sub: [t.name && langName(t.lang), codecLabel(t.codec), chLabel(t.channels)].filter(Boolean).join(' · '),
-              tag: t.def ? 'DEFAULT' : '',
-              langKey: langName(t.lang) || t.name
-            }));
-            audioCur = Math.max(0, auds.findIndex(t => t.def));
+          let probedMkv = false;
+          if (isMatroska || !['mp4', 'm4v', 'mov', 'mp3', 'aac', 'flac'].includes(urlExt)) {
+            try {
+              mkv = await mkvProbe(FILE_URL);
+              if (mkv && mkv.tracks && mkv.tracks.length) {
+                probedMkv = true;
+                const auds = mkv.tracks.filter(t => t.type === 2);
+                audioItems = auds.map((t, i) => ({
+                  label: t.name || langName(t.lang) || `Audio ${i + 1}`,
+                  sub: [t.name && langName(t.lang), codecLabel(t.codec), chLabel(t.channels)].filter(Boolean).join(' · '),
+                  tag: t.def ? 'DEFAULT' : '',
+                  langKey: langName(t.lang) || t.name
+                }));
+                audioCur = Math.max(0, auds.findIndex(t => t.def));
 
-            subItems = mkv.tracks.filter(t => t.type === 17).map(t => ({
-              label: t.name || langName(t.lang) || `Subtitle ${t.number}`,
-              sub: [t.name && langName(t.lang), t.forced ? 'Forced' : '', subCodecLabel(t.codec)].filter(Boolean).join(' · '),
-              track: t,
-              disabled: /PGS|VOBSUB|DVB/i.test(t.codec),
-              disabledReason: 'Image subtitles (PGS/VobSub) can only be viewed in external players like VLC or MX Player.'
-            }));
-          } else {
+                subItems = mkv.tracks.filter(t => t.type === 17).map(t => ({
+                  label: t.name || langName(t.lang) || `Subtitle ${t.number}`,
+                  sub: [t.name && langName(t.lang), t.forced ? 'Forced' : '', subCodecLabel(t.codec)].filter(Boolean).join(' · '),
+                  track: t,
+                  disabled: /PGS|VOBSUB|DVB/i.test(t.codec),
+                  disabledReason: 'Image subtitles (PGS/VobSub) can only be viewed in external players like VLC or MX Player.'
+                }));
+              }
+            } catch (probeErr) {
+              // Not EBML or probe failed, fallback to mediabunny
+            }
+          }
+          if (!probedMkv) {
             const mb = await loadMediabunny();
             const input = new mb.Input({ source: new mb.UrlSource(FILE_URL), formats: mb.ALL_FORMATS });
             const list = await input.getAudioTracks();
@@ -2546,6 +2518,16 @@
               sub: [codecLabel(t.codec), chLabel(t.numberOfChannels)].filter(Boolean).join(' · '),
               tag: t.disposition && t.disposition.default ? 'DEFAULT' : ''
             }));
+            try {
+              const subList = await input.getSubtitleTracks();
+              if (subList && subList.length) {
+                subItems = subList.map((t, i) => ({
+                  label: t.name || langName(t.languageCode) || `Subtitle ${i + 1}`,
+                  sub: [codecLabel(t.codec), t.disposition && t.disposition.forced ? 'Forced' : ''].filter(Boolean).join(' · '),
+                  mbTrack: t
+                }));
+              }
+            } catch (e) {}
           }
         } catch (err) {
           console.warn('Track probe completed or fallback:', err);
@@ -2577,25 +2559,59 @@
           const reader = new FileReader();
           reader.onload = (evt) => {
             const text = evt.target.result;
-            const parsed = (file.name.endsWith('.ass') || file.name.endsWith('.ssa'))
+            const parsed = (file.name.endsWith('.ass') || file.name.endsWith('.ssa') || text.includes('[Script Info]'))
               ? parseAssFile(text)
               : parseSrtVtt(text);
             const source = {
               active: (t) => activeCues(parsed, t),
               destroy() {}
             };
-            subs.setSource(source);
             subItems.unshift({
               label: file.name,
               sub: 'Loaded from Device',
-              tag: 'FILE'
+              tag: 'FILE',
+              source: source
             });
-            currentSub = 0;
-            refreshControlButtons();
+            selectSub(0);
             showToast(`Loaded subtitles: ${file.name}`);
           };
           reader.readAsText(file);
         });
+      }
+
+      async function promptSubtitleUrl() {
+        const url = prompt('Enter Subtitle (.srt, .vtt, .ass) URL:');
+        if (!url || !url.trim()) return;
+        try {
+          showToast('Fetching subtitles...');
+          const res = await fetch(url.trim());
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const text = await res.text();
+          const cleanUrl = url.trim().split('?')[0].toLowerCase();
+          const parsed = (cleanUrl.endsWith('.ass') || cleanUrl.endsWith('.ssa') || text.includes('[Script Info]'))
+            ? parseAssFile(text)
+            : parseSrtVtt(text);
+          if (!parsed.length) {
+            showToast('No valid subtitle cues found in URL');
+            return;
+          }
+          const fileName = url.trim().split('/').pop().split('?')[0] || 'Remote Subtitle';
+          const source = {
+            active: (t) => activeCues(parsed, t),
+            destroy() {}
+          };
+          subItems.unshift({
+            label: decodeURIComponent(fileName),
+            sub: 'Loaded from URL',
+            tag: 'URL',
+            source: source
+          });
+          selectSub(0);
+          showToast(`Loaded: ${fileName}`);
+        } catch (err) {
+          console.error(err);
+          showToast('Failed to load subtitle from URL');
+        }
       }
 
       /* ==========================================================================
@@ -2709,7 +2725,7 @@
           loadRow.style.cursor = 'pointer';
           loadRow.innerHTML = `
             <span class="ck"><i class="fa fa-upload"></i></span>
-            <div class="lb"><div>Load Subtitle File (.srt, .vtt)</div></div>
+            <div class="lb"><div>Load Subtitle File (.srt, .vtt, .ass)</div></div>
           `;
           loadRow.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -2717,6 +2733,21 @@
             triggerSubtitleUpload();
           });
           menuEl.appendChild(loadRow);
+
+          const loadUrlRow = document.createElement('div');
+          loadUrlRow.className = 'gd-mi';
+          loadUrlRow.style.color = '#ff4d56';
+          loadUrlRow.style.cursor = 'pointer';
+          loadUrlRow.innerHTML = `
+            <span class="ck"><i class="fa fa-link"></i></span>
+            <div class="lb"><div>Load Subtitle from URL</div></div>
+          `;
+          loadUrlRow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeMenu();
+            promptSubtitleUrl();
+          });
+          menuEl.appendChild(loadUrlRow);
         }
 
         if (!items.length) {
@@ -2803,7 +2834,9 @@
           return;
         }
         const it = subItems[idx];
-        if (mkv && it.track) {
+        if (it.source) {
+          subs.setSource(it.source);
+        } else if (mkv && it.track) {
           subs.setSource(embeddedSource(mkv, it.track, FILE_URL));
         }
         showToast(`Subtitles: ${it.label}`);
@@ -2869,10 +2902,12 @@
             doRewind();
             break;
           case 'ArrowUp':
-            volBooster.step(1, art, boostBadge);
+            art.volume = Math.min(1, Math.round((art.volume + 0.05) * 100) / 100);
+            showToast('🔊 Volume ' + Math.round(art.volume * 100) + '%');
             break;
           case 'ArrowDown':
-            volBooster.step(-1, art, boostBadge);
+            art.volume = Math.max(0, Math.round((art.volume - 0.05) * 100) / 100);
+            showToast('🔊 Volume ' + Math.round(art.volume * 100) + '%');
             break;
           case 'm':
           case 'M':
