@@ -104,12 +104,84 @@
     .art-progress .art-control-progress-played {
       background: var(--accent) !important;
     }
+    /* Always-visible Volume Bar with Draggable Slider */
+    .art-control-volume {
+      display: flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+    }
+    .art-video-player .art-bottom .art-controls .art-control-volume .art-volume-slider,
+    .art-video-player.art-is-mobile .art-bottom .art-controls .art-control-volume .art-volume-slider,
+    .art-control-volume .art-volume-slider {
+      display: flex !important;
+      align-items: center !important;
+      width: 66px !important;
+      height: 24px !important;
+      margin: 0 4px !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      cursor: pointer !important;
+      touch-action: none !important;
+    }
+    .art-control-volume .art-volume-slider-inner {
+      width: 100% !important;
+      height: 4px !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+      border-radius: 999px !important;
+      position: relative !important;
+    }
     .art-control-volume .art-volume-slider-handle {
       background: var(--accent) !important;
+      height: 100% !important;
+      border-radius: 999px !important;
+      position: relative !important;
+    }
+    .art-control-volume .art-volume-slider-handle::after {
+      content: '' !important;
+      position: absolute !important;
+      right: -5px !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      width: 12px !important;
+      height: 12px !important;
+      background: #ffffff !important;
+      border: 2px solid var(--accent) !important;
+      border-radius: 50% !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6) !important;
+      pointer-events: none !important;
     }
 
-    .art-video-player.gd-touch .art-control-volume {
+    /* Strict Flexbox Order matching reference screenshot layout */
+    .art-controls-left {
       display: flex !important;
+      align-items: center !important;
+    }
+    .art-control-playAndPause { order: 10 !important; }
+    .art-control-gd-rewind10 { order: 12 !important; }
+    .art-control-gd-forward10 { order: 14 !important; }
+    .art-control-volume { order: 20 !important; }
+    .art-control-time { order: 30 !important; }
+
+    .art-controls-right {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+    }
+    .art-control-gd-audio { order: 10 !important; }
+    .art-control-gd-speed { order: 20 !important; }
+    .art-control-aspect-ratio { order: 30 !important; }
+    .art-control-gd-rotate { order: 40 !important; }
+    .art-control-fullscreen { order: 99 !important; }
+
+    .art-control-time {
+      font: 500 13px/1 var(--mono, monospace) !important;
+      color: rgba(255, 255, 255, 0.9) !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 3px !important;
+      padding: 0 6px !important;
+      user-select: none !important;
+      white-space: nowrap !important;
     }
 
     .art-video-player.gd-narrow {
@@ -203,51 +275,7 @@
       fill: #ffffff;
     }
 
-    /* Subtitles Layer */
-    .gd-sub {
-      position: absolute;
-      inset: 0;
-      pointer-events: none !important;
-      z-index: 55 !important;
-      --sub-base: 22px;
-      --sub-scale: 0.75;
-      --sub-font: 'Nunito', Arial, sans-serif;
-      --sub-color: #ffffff;
-    }
-    .gd-sub .bot,
-    .gd-sub .topc {
-      position: absolute;
-      left: 4%;
-      right: 4%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      text-align: center;
-      pointer-events: none !important;
-      z-index: 56 !important;
-    }
-    .gd-sub .bot {
-      bottom: 7%;
-      transition: bottom 0.2s ease;
-    }
-    .gd-sub .topc {
-      top: 6%;
-    }
-    .art-control-show .gd-sub .bot {
-      bottom: max(7%, 62px);
-    }
-    .gd-sub span {
-      display: inline-block;
-      font: 600 calc(var(--sub-base) * var(--sub-scale)) / 1.25 var(--sub-font);
-      color: var(--sub-color, #ffffff);
-      padding: 0.12em 0.45em;
-      border-radius: 0.25em;
-      white-space: pre-wrap;
-      text-shadow: 0 0 3px #000, 0 1px 4px #000, 0 2px 6px #000;
-      background: rgba(0, 0, 0, var(--sub-bg, 0.55));
-      max-width: 100%;
-    }
+    /* Subtitles removed per request */
 
     /* Center Controls (Rewind 10s, Clapperboard Play, Forward 10s) */
     .gd-center-controls {
@@ -1147,8 +1175,7 @@
   <!-- Toast Notification Host -->
   <div id="toast-host" class="toast-host"></div>
 
-  <!-- Hidden Subtitle File Input for 'Add Subtitles' -->
-  <input type="file" id="sub-file-input" accept=".srt,.vtt,.ass,.ssa,.sub,.txt" style="display:none;" />
+
 
   <!-- Artplayer Core Script -->
   <script src="https://cdn.jsdelivr.net/npm/artplayer@5.4.0/dist/artplayer.js"></script>
@@ -1195,8 +1222,8 @@
       sub: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/></svg>',
       rotate: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zm-6.25-.77c-.59-.59-1.54-.59-2.12 0L1.75 8.11c-.59.59-.59 1.54 0 2.12l12.02 12.02c.59.59 1.54.59 2.12 0l6.36-6.36c.59-.59.59-1.54 0-2.12L10.23 1.75zm4.6 19.44L2.81 9.17l6.36-6.36 12.02 12.02-6.36 6.36zm-7.31.29C4.25 19.94 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33 1.32z"/></svg>',
       check: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>',
-      rewind10: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.2 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.91 11.08 17.07 8 12.5 8z"/></svg>',
-      forward10: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M11.5 8c2.65 0 5.05.99 6.9 2.6L22 7v9h-9l3.62-3.62c-1.39-1.2-3.16-1.88-5.12-1.88-3.54 0-6.55 2.31-7.6 5.5l-2.37-.78C3.09 11.08 6.93 8 11.5 8z"/></svg>',
+      rewind10: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-4-4 4-4"/><path d="M5 10h11a4 4 0 1 1 0 8h-1"/><text x="11.5" y="13.5" font-size="6.5" font-weight="900" font-family="sans-serif" fill="currentColor" stroke="none" text-anchor="middle">10</text></svg>',
+      forward10: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l4-4-4-4"/><path d="M19 10H8a4 4 0 1 0 0 8h1"/><text x="12.5" y="13.5" font-size="6.5" font-weight="900" font-family="sans-serif" fill="currentColor" stroke="none" text-anchor="middle">10</text></svg>',
       clapper: '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>',
       aspectRatio: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"/></svg>',
       addSub: '<svg viewBox="0 0 24 24" class="gd-set-icon"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/></svg>',
@@ -1492,293 +1519,7 @@
       return t;
     }
 
-    /* ==========================================================================
-       6. SUBTITLES ENGINE & PARSERS
-       ========================================================================== */
-    function createSubtitleLayer(art, playerContainer) {
-      const layer = document.createElement('div');
-      layer.className = 'gd-sub';
-      const top = document.createElement('div');
-      top.className = 'topc';
-      const bot = document.createElement('div');
-      bot.className = 'bot';
-      layer.append(top, bot);
-      playerContainer.appendChild(layer);
-
-      let source = null, lastKey = '', raf = 0, alive = true;
-      const video = art.video;
-      let tt = null;
-      try { tt = video.addTextTrack('subtitles', 'Subtitles', 'und'); tt.mode = 'hidden'; } catch {}
-
-      const ro = new ResizeObserver(() => {
-        const hgt = playerContainer.clientHeight || 360;
-        layer.style.setProperty('--sub-base', Math.max(14, Math.min(50, hgt * 0.05)) + 'px');
-      });
-      ro.observe(playerContainer);
-
-      let delayV = 0;
-      const api = {
-        get delay() { return delayV; },
-        set delay(v) { delayV = v; },
-        setSource(s) { if (source && source.destroy) source.destroy(); source = s; lastKey = '#'; },
-        setScale(v) { store.set('subScale', v); layer.style.setProperty('--sub-scale', v); },
-        setBg(on) { store.set('subBg', on); layer.style.setProperty('--sub-bg', on ? '0.55' : '0'); },
-        setFont(id) { const f = subFont(id); store.set('subFont', f.id); layer.style.setProperty('--sub-font', f.css); },
-        setColor(hex) { store.set('subColor', hex); layer.style.setProperty('--sub-color', hex); },
-        destroy() {
-          alive = false;
-          cancelAnimationFrame(raf);
-          ro.disconnect();
-          if (source && source.destroy) source.destroy();
-          layer.remove();
-        }
-      };
-
-      api.setScale(store.get('subScale', 0.75));
-      api.setBg(store.get('subBg', true));
-      api.setFont(store.get('subFont', 'nunito'));
-      api.setColor(store.get('subColor', '#ffffff'));
-
-      function render() {
-        if (!alive) return;
-        raf = requestAnimationFrame(render);
-        if (!source) {
-          if (lastKey) { top.innerHTML = ''; bot.innerHTML = ''; lastKey = ''; }
-          return;
-        }
-        const t = video.currentTime - api.delay;
-        if (source.tick) source.tick(t, video.paused);
-        const act = source.active(t);
-        const key = act.map(c => c.id).join(',');
-        if (key === lastKey) return;
-        lastKey = key;
-        top.innerHTML = ''; bot.innerHTML = '';
-        for (const c of act) {
-          const span = document.createElement('span');
-          span.innerHTML = c.html;
-          (c.top ? top : bot).appendChild(span);
-        }
-      }
-      raf = requestAnimationFrame(render);
-      return api;
-    }
-
-    let cueSeq = 0;
-    function makeCue(start, end, raw) {
-      const topPos = /\\an[789]/.test(raw);
-      let t = raw.replace(/\r\n?/g, '\n').replace(/\{\\[^}]*\}/g, '').replace(/\\N/g, '\n').replace(/\\n/g, '\n').replace(/\\h/g, ' ');
-      t = t.replace(/<(?!\/?(i|b|u)>)[^>]*>/gi, '').trim();
-      if (!t) return null;
-      const html = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-      return { id: ++cueSeq, start, end: Math.max(end, start + 0.3), html, top: topPos };
-    }
-
-    function insertCue(arr, cue) {
-      let lo = 0, hi = arr.length;
-      while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid].start <= cue.start) lo = mid + 1; else hi = mid; }
-      arr.splice(lo, 0, cue);
-    }
-
-    function activeCues(arr, t) {
-      let lo = 0, hi = arr.length;
-      while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid].start <= t) lo = mid + 1; else hi = mid; }
-      const out = [];
-      for (let i = lo - 1, n = 0; i >= 0 && n < 40; i--, n++) if (arr[i].end > t) out.unshift(arr[i]);
-      return out;
-    }
-
-    function parseStamp(s) {
-      const m = String(s).trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:[.,](\d+))?$/);
-      if (!m) return null;
-      const frac = m[4] ? parseFloat('0.' + m[4]) : 0;
-      return (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) + frac;
-    }
-
-    function parseSrtVtt(raw) {
-      const out = [];
-      const blocks = raw.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').split(/\n{2,}/);
-      for (const b of blocks) {
-        const lines = b.split('\n');
-        const i = lines.findIndex(l => l.includes('-->'));
-        if (i < 0) continue;
-        const [a, z] = lines[i].split('-->');
-        const s = parseStamp(a), e = parseStamp((z || '').trim().split(/\s+/)[0]);
-        if (s == null || e == null) continue;
-        const c = makeCue(s, e, lines.slice(i + 1).join('\n'));
-        if (c) out.push(c);
-      }
-      return out.sort((a, b) => a.start - b.start);
-    }
-
-    function parseAssFile(raw) {
-      const out = [];
-      let fmt = null;
-      for (const line of raw.replace(/\r\n?/g, '\n').split('\n')) {
-        if (/^Format:/i.test(line) && fmt === null && /Start/i.test(line) && /Text/i.test(line)) {
-          fmt = line.slice(7).split(',').map(s => s.trim().toLowerCase());
-        } else if (/^Dialogue:/i.test(line) && fmt) {
-          const parts = line.slice(9).split(',');
-          const textIdx = fmt.indexOf('text');
-          const rec = parts.slice(0, textIdx).map(s => s.trim());
-          const txt = parts.slice(textIdx).join(',');
-          const s = parseStamp(rec[fmt.indexOf('start')]), e = parseStamp(rec[fmt.indexOf('end')]);
-          if (s == null || e == null) continue;
-          const c = makeCue(s, e, txt);
-          if (c) out.push(c);
-        }
-      }
-      return out.sort((a, b) => a.start - b.start);
-    }
-
-    function cleanAssText(raw) {
-      // In Matroska ASS/SSA blocks:
-      // "ReadOrder, Layer, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
-      // There are 8 commas preceding the actual dialogue text.
-      let text = raw;
-      let commaCount = 0;
-      let idx = -1;
-      for (let i = 0; i < text.length; i++) {
-        if (text[i] === ',') {
-          commaCount++;
-          if (commaCount === 8) {
-            idx = i + 1;
-            break;
-          }
-        }
-      }
-      if (idx !== -1) {
-        text = text.slice(idx);
-      }
-      return text;
-    }
-
-    function embeddedSource(info, track, url) {
-      const cues = [];
-      let dead = false;
-      const trackNum = track.number;
-      const tsSec = info.tsSec || 0.001;
-      const isAss = /ASS|SSA/i.test(track.codec || '');
-
-      (async () => {
-        try {
-          let filePos = info.firstCluster || 0;
-          const chunkSize = 2 * 1024 * 1024; // 2MB
-          const maxScan = 50 * 1024 * 1024; // Scan up to 50MB of stream
-          let scanned = 0;
-          let leftover = new Uint8Array(0);
-          let curClusterTs = 0;
-
-          while (!dead && scanned < maxScan) {
-            const chunk = await fetchRange(url, filePos, filePos + chunkSize - 1).catch(() => null);
-            if (!chunk || chunk.length === 0) break;
-            filePos += chunk.length;
-            scanned += chunk.length;
-
-            let buf;
-            if (leftover.length > 0) {
-              buf = new Uint8Array(leftover.length + chunk.length);
-              buf.set(leftover);
-              buf.set(chunk, leftover.length);
-              leftover = new Uint8Array(0);
-            } else {
-              buf = chunk;
-            }
-
-            let p = 0;
-            while (p + 4 < buf.length && !dead) {
-              const el = hdr(buf, p);
-              if (!el) {
-                p++;
-                continue;
-              }
-
-              // Cluster container: step inside
-              if (el.id === ID.Cluster) {
-                p = el.data;
-                continue;
-              }
-
-              // Element is truncated by end of buffer
-              if (el.end > buf.length || el.end === Infinity) {
-                break;
-              }
-
-              if (el.id === ID.Timestamp) {
-                curClusterTs = uint(buf, el.data, el.size);
-                p = el.end;
-              } else if (el.id === ID.SimpleBlock || el.id === ID.Block) {
-                const bt = readVint(buf, el.data);
-                if (bt && bt.v === trackNum) {
-                  const relOff = el.data + bt.len;
-                  if (relOff + 3 <= el.end) {
-                    const relTime = (buf[relOff] << 8) | buf[relOff + 1];
-                    const sRelTime = relTime > 32767 ? relTime - 65536 : relTime;
-                    const sTime = (curClusterTs + sRelTime) * tsSec;
-                    const txtStart = relOff + 3;
-                    const txtEnd = el.end;
-                    if (txtEnd > txtStart) {
-                      let raw = str(buf, txtStart, txtEnd - txtStart);
-                      if (isAss) raw = cleanAssText(raw);
-                      const c = makeCue(sTime, sTime + 3.5, raw);
-                      if (c) insertCue(cues, c);
-                    }
-                  }
-                }
-                p = el.end;
-              } else if (el.id === ID.BlockGroup) {
-                let bp = el.data;
-                let dur = 3.5;
-                const bgEnd = Math.min(el.end, buf.length);
-                while (bp + 4 < bgEnd && !dead) {
-                  const bch = hdr(buf, bp);
-                  if (!bch || bch.end > bgEnd) break;
-                  if (bch.id === ID.BlockDuration || bch.id === 0x8B) {
-                    dur = (uint(buf, bch.data, bch.size) || 3500) * tsSec;
-                  } else if (bch.id === ID.Block) {
-                    const bt = readVint(buf, bch.data);
-                    if (bt && bt.v === trackNum) {
-                      const relOff = bch.data + bt.len;
-                      if (relOff + 3 <= bch.end) {
-                        const relTime = (buf[relOff] << 8) | buf[relOff + 1];
-                        const sRelTime = relTime > 32767 ? relTime - 65536 : relTime;
-                        const sTime = (curClusterTs + sRelTime) * tsSec;
-                        const txtStart = relOff + 3;
-                        const txtEnd = bch.end;
-                        if (txtEnd > txtStart) {
-                          let raw = str(buf, txtStart, txtEnd - txtStart);
-                          if (isAss) raw = cleanAssText(raw);
-                          const c = makeCue(sTime, sTime + dur, raw);
-                          if (c) insertCue(cues, c);
-                        }
-                      }
-                    }
-                  }
-                  bp = bch.end;
-                }
-                p = el.end;
-              } else {
-                p = el.end;
-              }
-            }
-
-            // Save leftover bytes across chunk boundaries
-            if (p < buf.length && buf.length - p < 2 * 1024 * 1024) {
-              leftover = buf.subarray(p);
-            } else {
-              leftover = new Uint8Array(0);
-            }
-          }
-        } catch (e) {
-          console.warn('MKV subtitle scan warning:', e);
-        }
-      })();
-
-      return {
-        tick() {},
-        active: (t) => activeCues(cues, t),
-        destroy() { dead = true; }
-      };
-    }
+    /* Subtitles engine removed */
 
     /* ==========================================================================
        7. AUDIO REMUXER & WASM DECODER
@@ -2137,8 +1878,6 @@
       let menuEl = null, helpEl = null;
       let audioItems = [];
       let audioCur = 0;
-      let subItems = [];
-      let currentSub = -1;
       let mkv = null;
 
       Artplayer.CONTROL_HIDE_TIME = 2400;
@@ -2181,51 +1920,58 @@
         },
         controls: [
           {
-            name: 'gd-speed',
-            position: 'right',
-            index: 1,
-            html: '<span class="gd-speed-pill" title="Playback Speed">1×</span>',
-            tooltip: 'Play Speed',
-            click: () => toggleMenu('speed')
+            name: 'gd-rewind10',
+            position: 'left',
+            index: 12,
+            html: '<i class="gd-ico">' + SVG_ICONS.rewind10 + '</i>',
+            tooltip: 'Rewind 10s (←)',
+            click: () => doRewind()
+          },
+          {
+            name: 'gd-forward10',
+            position: 'left',
+            index: 14,
+            html: '<i class="gd-ico">' + SVG_ICONS.forward10 + '</i>',
+            tooltip: 'Forward 10s (→)',
+            click: () => doForward()
           },
           {
             name: 'gd-audio',
             position: 'right',
-            index: 2,
+            index: 10,
             html: '<i class="gd-ico">' + SVG_ICONS.headphones + '</i>',
             tooltip: 'Audio Track (A)',
             click: () => toggleMenu('audio')
           },
           {
+            name: 'gd-speed',
+            position: 'right',
+            index: 20,
+            html: '<span class="gd-speed-pill" title="Playback Speed">1×</span>',
+            tooltip: 'Play Speed',
+            click: () => toggleMenu('speed')
+          },
+          {
             name: 'aspect-ratio',
             position: 'right',
-            index: 3,
+            index: 30,
             html: '<i class="gd-ico">' + SVG_ICONS.aspectRatio + '</i>',
             tooltip: 'Aspect Ratio',
             click: () => toggleMenu('aspect')
           },
           {
-            name: 'gd-subs',
-            position: 'right',
-            index: 4,
-            html: '<i class="gd-ico">' + SVG_ICONS.sub + '</i>',
-            tooltip: 'Subtitles (C)',
-            click: () => toggleMenu('subs')
-          },
-          IS_TOUCH ? {
             name: 'gd-rotate',
             position: 'right',
-            index: 65,
+            index: 40,
             html: '<i class="gd-ico">' + SVG_ICONS.rotate + '</i>',
             tooltip: 'Rotate Video',
             click: () => toggleRotate()
-          } : null,
+          },
         ].filter(Boolean)
       });
 
       const video = art.video;
       const playerEl = art.template.$player;
-      const subs = createSubtitleLayer(art, playerEl);
 
       // Volume HUD Overlay (Play4u style)
       const volHud = document.createElement('div');
@@ -2271,33 +2017,94 @@
         }, 1300);
       }
 
+      // Interactive Volume Slider Support (Touch, Pointer, Click for Mobile, TV & Desktop)
+      function initVolumeSlider() {
+        const volCtrl = playerEl.querySelector('.art-control-volume');
+        if (!volCtrl) return;
+        const slider = volCtrl.querySelector('.art-volume-slider');
+        if (!slider) return;
+        const inner = volCtrl.querySelector('.art-volume-slider-inner') || slider;
+        const handle = volCtrl.querySelector('.art-volume-slider-handle');
+
+        function setVolumeFromPointer(e) {
+          const rect = inner.getBoundingClientRect();
+          if (!rect.width) return;
+          const clientX = e.clientX != null ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+          const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+          video.volume = ratio;
+          video.muted = (ratio === 0);
+          try { art.volume = ratio; } catch {}
+          if (handle) handle.style.width = (ratio * 100) + '%';
+          showVolumeHud(ratio, video.muted);
+        }
+
+        let isDragging = false;
+        slider.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          isDragging = true;
+          try { slider.setPointerCapture(e.pointerId); } catch {}
+          setVolumeFromPointer(e);
+        });
+
+        slider.addEventListener('pointermove', (e) => {
+          if (isDragging) {
+            e.stopPropagation();
+            e.preventDefault();
+            setVolumeFromPointer(e);
+          }
+        });
+
+        const stopDrag = (e) => {
+          if (isDragging) {
+            isDragging = false;
+            try { slider.releasePointerCapture(e.pointerId); } catch {}
+          }
+        };
+        slider.addEventListener('pointerup', stopDrag);
+        slider.addEventListener('pointercancel', stopDrag);
+
+        const syncHandle = () => {
+          if (handle) {
+            const v = video.muted ? 0 : (video.volume ?? 1);
+            handle.style.width = (v * 100) + '%';
+          }
+        };
+        video.addEventListener('volumechange', syncHandle);
+        art.on('video:volumechange', syncHandle);
+        syncHandle();
+      }
+      setTimeout(initVolumeSlider, 60);
+
       video.addEventListener('volumechange', () => {
         showVolumeHud(video.volume, video.muted);
       });
 
-      // Play4u Time formatting: Hours and Minutes (H:MM:SS / HH:MM:SS)
-      function formatPlayTime(sec, forceHours = false) {
+      // Clean Time formatting (Matches screenshot: 00:00 / 2:09:41)
+      function formatPlayTime(sec) {
         if (isNaN(sec) || sec < 0) sec = 0;
         const h = Math.floor(sec / 3600);
         const m = Math.floor((sec % 3600) / 60);
         const s = Math.floor(sec % 60);
-        if (forceHours || h > 0) {
-          return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        if (h > 0) {
+          return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
         return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
       }
 
       function updatePlayTimeDisplay() {
-        const timeEl = playerEl.querySelector('.art-control-time');
-        if (!timeEl) return;
-        const cur = video.currentTime || 0;
+        const curEl = playerEl.querySelector('.art-time-current');
+        const durEl = playerEl.querySelector('.art-time-duration');
+        const cur = (typeof art.currentTime === 'number' && !isNaN(art.currentTime)) ? art.currentTime : (video.currentTime || 0);
         const dur = (typeof art.duration === 'number' && !isNaN(art.duration) && art.duration > 0) ? art.duration : (video.duration || 0);
-        const forceHours = dur >= 3600 || cur >= 3600;
-        timeEl.innerHTML = `<span class="art-time-current">${formatPlayTime(cur, forceHours)}</span> / <span class="art-time-duration">${formatPlayTime(dur, forceHours)}</span>`;
+        if (curEl) curEl.textContent = formatPlayTime(cur);
+        if (durEl) durEl.textContent = formatPlayTime(dur);
       }
       video.addEventListener('timeupdate', updatePlayTimeDisplay);
       video.addEventListener('loadedmetadata', updatePlayTimeDisplay);
       video.addEventListener('durationchange', updatePlayTimeDisplay);
+      art.on('video:timeupdate', updatePlayTimeDisplay);
+      art.on('seek', updatePlayTimeDisplay);
 
       // Responsive Control Bar
       if (IS_TOUCH) playerEl.classList.add('gd-touch');
@@ -2557,8 +2364,7 @@
           previewWrap.style.left = clampedX + 'px';
           previewWrap.style.display = 'flex';
 
-          const forceHours = dur >= 3600 || targetTime >= 3600;
-          previewTimeEl.textContent = formatPlayTime(targetTime, forceHours);
+          previewTimeEl.textContent = formatPlayTime(targetTime);
 
           // Live animated video preview playing around hovered time
           if (Math.abs(previewLoopStart - targetTime) > 1.2) {
@@ -2599,13 +2405,7 @@
                 }));
                 audioCur = Math.max(0, auds.findIndex(t => t.def));
 
-                subItems = mkv.tracks.filter(t => t.type === 17).map(t => ({
-                  label: t.name || langName(t.lang) || `Subtitle ${t.number}`,
-                  sub: [t.name && langName(t.lang), t.forced ? 'Forced' : '', subCodecLabel(t.codec)].filter(Boolean).join(' · '),
-                  track: t,
-                  disabled: /PGS|VOBSUB|DVB/i.test(t.codec),
-                  disabledReason: 'Image subtitles (PGS/VobSub) can only be viewed in external players like VLC or MX Player.'
-                }));
+
               }
             } catch (probeErr) {
               // Not EBML or probe failed, fallback to mediabunny
@@ -2620,35 +2420,10 @@
               sub: [codecLabel(t.codec), chLabel(t.numberOfChannels)].filter(Boolean).join(' · '),
               tag: t.disposition && t.disposition.default ? 'DEFAULT' : ''
             }));
-            try {
-              const subList = await input.getSubtitleTracks();
-              if (subList && subList.length) {
-                subItems = subList.map((t, i) => ({
-                  label: t.name || langName(t.languageCode) || `Subtitle ${i + 1}`,
-                  sub: [codecLabel(t.codec), t.disposition && t.disposition.forced ? 'Forced' : ''].filter(Boolean).join(' · '),
-                  mbTrack: t
-                }));
-              }
-            } catch (e) {}
+
           }
         } catch (err) {
           console.warn('Track probe completed or fallback:', err);
-        }
-        // Auto-select first or default subtitle if present
-        if (subItems.length > 0 && currentSub < 0) {
-          const defIdx = subItems.findIndex(s => s.track && (s.track.def || s.track.forced));
-          selectSub(defIdx >= 0 ? defIdx : 0);
-        } else if (subItems.length === 0) {
-          // Provide sample subtitles for test player
-          const sampleVtt = `WEBVTT\n\n1\n00:00:01.000 --> 00:00:06.000\nBig Buck Bunny (Sample Online Subtitle)\n\n2\n00:00:06.500 --> 00:00:12.000\nHigh performance player with multi-audio, subtitle & speed support!\n\n3\n00:00:12.500 --> 00:00:20.000\nHours and minutes display, volume HUD and fast play/pause controls.`;
-          const parsed = parseSrtVtt(sampleVtt);
-          subItems.push({
-            label: 'English [Online Sample]',
-            sub: 'WebVTT Stream',
-            tag: 'DEFAULT',
-            source: { active: (t) => activeCues(parsed, t), destroy() {} }
-          });
-          selectSub(0);
         }
         refreshControlButtons();
       })();
@@ -2656,87 +2431,6 @@
       function refreshControlButtons() {
         const ab = art.controls['gd-audio'];
         if (ab) ab.style.display = audioItems.length > 0 ? '' : 'none';
-        const sb = art.controls['gd-subs'];
-        if (sb) {
-          sb.style.opacity = currentSub >= 0 ? '1' : '0.75';
-          if (currentSub >= 0 && subItems[currentSub]) {
-            sb.title = `Subtitles (${subItems[currentSub].label})`;
-          } else {
-            sb.title = 'Subtitles (Off)';
-          }
-        }
-      }
-
-      /* ==========================================================================
-         12. SUBTITLE FILE UPLOAD ("Add subtitles -> Site or device")
-         ========================================================================== */
-      const fileInput = document.getElementById('sub-file-input');
-      function triggerSubtitleUpload() {
-        if (!fileInput) return;
-        fileInput.value = '';
-        fileInput.click();
-      }
-
-      if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            const text = evt.target.result;
-            const parsed = (file.name.endsWith('.ass') || file.name.endsWith('.ssa') || text.includes('[Script Info]'))
-              ? parseAssFile(text)
-              : parseSrtVtt(text);
-            const source = {
-              active: (t) => activeCues(parsed, t),
-              destroy() {}
-            };
-            subItems.unshift({
-              label: file.name,
-              sub: 'Loaded from Device',
-              tag: 'FILE',
-              source: source
-            });
-            selectSub(0);
-            showToast(`Loaded subtitles: ${file.name}`);
-          };
-          reader.readAsText(file);
-        });
-      }
-
-      async function promptSubtitleUrl() {
-        const url = prompt('Enter Subtitle (.srt, .vtt, .ass) URL:');
-        if (!url || !url.trim()) return;
-        try {
-          showToast('Fetching subtitles...');
-          const res = await fetch(url.trim());
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          const text = await res.text();
-          const cleanUrl = url.trim().split('?')[0].toLowerCase();
-          const parsed = (cleanUrl.endsWith('.ass') || cleanUrl.endsWith('.ssa') || text.includes('[Script Info]'))
-            ? parseAssFile(text)
-            : parseSrtVtt(text);
-          if (!parsed.length) {
-            showToast('No valid subtitle cues found in URL');
-            return;
-          }
-          const fileName = url.trim().split('/').pop().split('?')[0] || 'Remote Subtitle';
-          const source = {
-            active: (t) => activeCues(parsed, t),
-            destroy() {}
-          };
-          subItems.unshift({
-            label: decodeURIComponent(fileName),
-            sub: 'Loaded from URL',
-            tag: 'URL',
-            source: source
-          });
-          selectSub(0);
-          showToast(`Loaded: ${fileName}`);
-        } catch (err) {
-          console.error(err);
-          showToast('Failed to load subtitle from URL');
-        }
       }
 
       /* ==========================================================================
@@ -2863,63 +2557,28 @@
           return;
         }
 
-        // 3. Audio & Subtitle Menus
-        const items = which === 'audio' ? audioItems : subItems;
-        const cur = which === 'audio' ? audioCur : currentSub;
+        // 3. Audio Tracks Menu
+        if (which === 'audio') {
+          menuEl = document.createElement('div');
+          menuEl.className = 'gd-menu' + (IS_TOUCH && window.innerHeight < 500 ? ' sheet' : '');
+          menuEl.dataset.which = 'audio';
 
-        menuEl = document.createElement('div');
-        menuEl.className = 'gd-menu' + (IS_TOUCH && window.innerHeight < 500 ? ' sheet' : '');
-        menuEl.dataset.which = which;
+          const h4 = document.createElement('h4');
+          h4.textContent = 'Audio Tracks';
+          menuEl.appendChild(h4);
 
-        const h4 = document.createElement('h4');
-        h4.textContent = which === 'audio' ? 'Audio Tracks' : 'Subtitles';
-        menuEl.appendChild(h4);
-
-        if (which === 'subs') {
-          menuEl.appendChild(createMenuItem({ label: 'Off' }, cur === -1, () => selectSub(-1)));
-
-          const loadRow = document.createElement('div');
-          loadRow.className = 'gd-mi';
-          loadRow.style.color = '#ff4d56';
-          loadRow.style.cursor = 'pointer';
-          loadRow.innerHTML = `
-            <span class="ck"><i class="fa fa-upload"></i></span>
-            <div class="lb"><div>Load Subtitle File (.srt, .vtt, .ass)</div></div>
-          `;
-          loadRow.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeMenu();
-            triggerSubtitleUpload();
-          });
-          menuEl.appendChild(loadRow);
-
-          const loadUrlRow = document.createElement('div');
-          loadUrlRow.className = 'gd-mi';
-          loadUrlRow.style.color = '#ff4d56';
-          loadUrlRow.style.cursor = 'pointer';
-          loadUrlRow.innerHTML = `
-            <span class="ck"><i class="fa fa-link"></i></span>
-            <div class="lb"><div>Load Subtitle from URL</div></div>
-          `;
-          loadUrlRow.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeMenu();
-            promptSubtitleUrl();
-          });
-          menuEl.appendChild(loadUrlRow);
-        }
-
-        if (!items.length) {
-          const note = document.createElement('div');
-          note.className = 'note';
-          note.textContent = which === 'audio' ? 'Default audio stream active.' : 'No embedded subtitles found.';
-          menuEl.appendChild(note);
-        } else {
-          items.forEach((it, i) => {
-            menuEl.appendChild(createMenuItem(it, i === cur, () => {
-              if (which === 'audio') selectAudio(i); else selectSub(i);
-            }));
-          });
+          if (!audioItems.length) {
+            const note = document.createElement('div');
+            note.className = 'note';
+            note.textContent = 'Default audio stream active.';
+            menuEl.appendChild(note);
+          } else {
+            audioItems.forEach((it, i) => {
+              menuEl.appendChild(createMenuItem(it, i === audioCur, () => {
+                selectAudio(i);
+              }));
+            });
+          }
         }
 
         playerEl.appendChild(menuEl);
@@ -2984,22 +2643,7 @@
         if (playing) video.play().catch(() => {});
       }
 
-      function selectSub(idx) {
-        currentSub = idx;
-        refreshControlButtons();
-        if (idx < 0) {
-          subs.setSource(null);
-          showToast('Subtitles Off');
-          return;
-        }
-        const it = subItems[idx];
-        if (it.source) {
-          subs.setSource(it.source);
-        } else if (mkv && it.track) {
-          subs.setSource(embeddedSource(mkv, it.track, FILE_URL));
-        }
-        showToast(`Subtitles: ${it.label}`);
-      }
+
 
       /* ==========================================================================
          15. TOUCH GESTURES (DOUBLE TAP SEEK & ROTATE)
@@ -3077,15 +2721,6 @@
           case 'F':
             art.fullscreen = !art.fullscreen;
             break;
-          case 'c':
-          case 'C':
-            if (subItems.length) {
-              const nextSub = (currentSub + 2) % (subItems.length + 1) - 1;
-              selectSub(nextSub);
-            } else {
-              showToast('No subtitles available');
-            }
-            break;
           case 'a':
           case 'A':
             if (audioItems.length > 1) {
@@ -3098,16 +2733,6 @@
           case 'p':
           case 'P':
             try { art.pip = !art.pip; } catch {}
-            break;
-          case 'g':
-          case 'G':
-            subs.delay = Math.round((subs.delay - 0.1) * 10) / 10;
-            showToast(`Subtitle Delay: ${subs.delay.toFixed(1)}s`);
-            break;
-          case 'h':
-          case 'H':
-            subs.delay = Math.round((subs.delay + 0.1) * 10) / 10;
-            showToast(`Subtitle Delay: ${subs.delay.toFixed(1)}s`);
             break;
           case '>':
             art.playbackRate = Math.min(3, art.playbackRate + 0.25);
@@ -3150,12 +2775,10 @@
               <div><span>Play / Pause</span><kbd>Space / K</kbd></div>
               <div><span>Seek Back / Forward</span><kbd>← / →</kbd></div>
               <div><span>30s Fast Seek</span><kbd>Shift + ← →</kbd></div>
-              <div><span>Volume Boost (up to 400%)</span><kbd>↑ / ↓</kbd></div>
+              <div><span>Volume Up / Down</span><kbd>↑ / ↓</kbd></div>
               <div><span>Mute Audio</span><kbd>M</kbd></div>
               <div><span>Toggle Fullscreen</span><kbd>F</kbd></div>
               <div><span>Switch Audio Track</span><kbd>A</kbd></div>
-              <div><span>Cycle Subtitles</span><kbd>C</kbd></div>
-              <div><span>Subtitle Delay -/+</span><kbd>G / H</kbd></div>
               <div><span>Playback Speed</span><kbd>&lt; / &gt;</kbd></div>
               <div><span>Jump to 0% – 90%</span><kbd>0 – 9</kbd></div>
               <div><span>Picture-in-Picture</span><kbd>P</kbd></div>
@@ -3170,7 +2793,7 @@
 
       // Close menu on outside click
       document.addEventListener('pointerdown', (e) => {
-        if (menuEl && !menuEl.contains(e.target) && !e.target.closest('.art-control-gd-audio, .art-control-gd-subs, .art-control-aspect-ratio, .art-control-gd-speed')) {
+        if (menuEl && !menuEl.contains(e.target) && !e.target.closest('.art-control-gd-audio, .art-control-aspect-ratio, .art-control-gd-speed, .art-control-gd-rotate')) {
           closeMenu();
         }
       }, true);
