@@ -198,50 +198,68 @@
       flex-shrink: 0 !important;
     }
 
-    /* Hide Artplayer internal horizontal slider */
+    /* Hide Artplayer internal horizontal slider & overlapping tooltip completely */
     .art-video-player .art-bottom .art-controls .art-control-volume .art-volume-slider,
     .art-video-player.art-is-mobile .art-bottom .art-controls .art-control-volume .art-volume-slider,
-    .art-control-volume .art-volume-slider {
+    .art-control-volume .art-volume-slider,
+    .art-control-volume .art-tooltip,
+    .art-control-volume:hover .art-tooltip,
+    .art-control-volume.art-is-hover .art-tooltip,
+    .art-video-player .art-bottom .art-controls .art-control-volume .art-tooltip {
       display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      clip: rect(0, 0, 0, 0) !important;
+      border: 0 !important;
     }
 
     /* Green Underline Under Speaker Icon (Desktop Mode) */
     .gd-vol-underline {
       position: absolute;
-      bottom: 2px;
+      bottom: 1px;
       left: 50%;
       transform: translateX(-50%);
-      width: 18px;
+      width: 24px;
       height: 2.5px;
       background: var(--accent);
-      border-radius: 2px;
+      border-radius: 999px;
       opacity: 0;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.18s ease;
       pointer-events: none;
+      z-index: 10;
     }
-    .art-control-volume.is-active .gd-vol-underline,
     .art-control-volume.is-open .gd-vol-underline,
-    .art-control-volume:hover .gd-vol-underline {
+    .art-control-volume:hover .gd-vol-underline,
+    .gd-volume-popover.is-dragging ~ .gd-vol-underline {
       opacity: 1;
     }
 
-    /* Desktop Vertical Volume Popover */
+    /* Desktop Vertical Volume Popover (Clean, transparent, matching reference player in image) */
     .gd-volume-popover {
       position: absolute;
-      bottom: calc(100% + 12px);
+      bottom: calc(100% + 14px);
       left: 50%;
       transform: translateX(-50%);
-      width: 40px;
-      height: 120px;
+      width: 36px;
+      height: 114px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 12px 0;
+      padding: 6px 0;
       box-sizing: border-box;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      transition: opacity 0.18s ease, visibility 0.18s ease;
       z-index: 120;
       touch-action: none;
     }
@@ -251,12 +269,12 @@
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
-      transform: translateX(-50%) translateY(0);
+      transform: translateX(-50%);
     }
     .gd-vol-track {
-      width: 3.5px;
-      height: 86px;
-      background: rgba(255, 255, 255, 0.25);
+      width: 3px;
+      height: 98px;
+      background: rgba(255, 255, 255, 0.3);
       border-radius: 999px;
       position: relative;
       cursor: pointer;
@@ -285,11 +303,11 @@
       top: 0;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 13px;
-      height: 13px;
+      width: 14px;
+      height: 14px;
       background: var(--accent);
       border-radius: 50%;
-      box-shadow: 0 0 6px rgba(16, 214, 138, 0.6);
+      box-shadow: 0 0 8px rgba(16, 209, 134, 0.6);
       pointer-events: none;
     }
 
@@ -2357,7 +2375,7 @@
         const volCtrl = playerEl.querySelector('.art-control-volume');
         if (!volCtrl) return;
 
-        // 1. Desktop Vertical Popover
+        // 1. Desktop Vertical Popover (Clean vertical track & thumb matching image reference)
         let popover = volCtrl.querySelector('.gd-volume-popover');
         if (!popover) {
           popover = document.createElement('div');
@@ -2370,7 +2388,22 @@
             </div>
           `;
           volCtrl.appendChild(popover);
+        } else {
+          const oldBadge = popover.querySelector('.gd-vol-badge');
+          if (oldBadge) oldBadge.remove();
         }
+
+        // Clean up any conflicting Artplayer tooltip or slider elements
+        volCtrl.querySelectorAll('.art-tooltip, .art-volume-slider').forEach(el => el.remove());
+        try {
+          const obs = new MutationObserver(() => {
+            volCtrl.querySelectorAll('.art-tooltip, .art-volume-slider').forEach(el => {
+              el.style.display = 'none';
+              el.remove();
+            });
+          });
+          obs.observe(volCtrl, { childList: true, subtree: true });
+        } catch {}
 
         // 2. Desktop Underline Indicator
         let underline = volCtrl.querySelector('.gd-vol-underline');
@@ -3142,6 +3175,103 @@
       }
 
       /* ==========================================================================
+         ROBUST FULLSCREEN CONTROLLER (RELIABLE ENTER & EXIT FOR PC & MOBILE)
+         ========================================================================== */
+      function isFullscreenActive() {
+        return !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement ||
+          (typeof art !== 'undefined' && (art.fullscreen || art.fullscreenWeb)) ||
+          (playerEl && (
+            playerEl.classList.contains('art-fullscreen') ||
+            playerEl.classList.contains('art-fullscreen-web') ||
+            playerEl.classList.contains('is-fullscreen')
+          ))
+        );
+      }
+
+      function exitFullscreenSafe() {
+        try {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        } catch (e) {}
+        try { art.fullscreen = false; } catch (e) {}
+        try { art.fullscreenWeb = false; } catch (e) {}
+        if (playerEl) {
+          playerEl.classList.remove('art-fullscreen', 'art-fullscreen-web', 'is-fullscreen');
+        }
+      }
+
+      function enterFullscreenSafe() {
+        if (typeof art !== 'undefined' && art.fullscreen !== undefined) {
+          try {
+            art.fullscreen = true;
+            return;
+          } catch (e) {}
+        }
+        const el = playerEl || document.documentElement;
+        try {
+          if (el.requestFullscreen) {
+            el.requestFullscreen().catch(() => {
+              try { art.fullscreenWeb = true; } catch (e) {}
+            });
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+          } else if (el.mozRequestFullScreen) {
+            el.mozRequestFullScreen();
+          } else if (el.msRequestFullscreen) {
+            el.msRequestFullscreen();
+          } else {
+            try { art.fullscreenWeb = true; } catch (e) {}
+          }
+        } catch (e) {}
+      }
+
+      function toggleFullscreen() {
+        if (isFullscreenActive()) {
+          exitFullscreenSafe();
+        } else {
+          enterFullscreenSafe();
+        }
+      }
+
+      // Delegated capture listener ensures clicking the fullscreen button always enters or exits reliably
+      playerEl.addEventListener('click', (e) => {
+        const fsBtn = e.target.closest('.art-control-fullscreen');
+        if (fsBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleFullscreen();
+        }
+      }, true);
+
+      function onFullscreenStateChange() {
+        const isFS = isFullscreenActive();
+        if (playerEl) playerEl.classList.toggle('is-fullscreen', isFS);
+        const fsBtn = playerEl ? playerEl.querySelector('.art-control-fullscreen') : null;
+        if (fsBtn) {
+          fsBtn.setAttribute('title', isFS ? 'Exit Fullscreen (F)' : 'Fullscreen (F)');
+        }
+      }
+      document.addEventListener('fullscreenchange', onFullscreenStateChange);
+      document.addEventListener('webkitfullscreenchange', onFullscreenStateChange);
+      document.addEventListener('mozfullscreenchange', onFullscreenStateChange);
+      document.addEventListener('MSFullscreenChange', onFullscreenStateChange);
+      if (typeof art !== 'undefined') {
+        art.on('fullscreen', onFullscreenStateChange);
+        art.on('fullscreenWeb', onFullscreenStateChange);
+      }
+
+      /* ==========================================================================
          16. KEYBOARD SHORTCUTS
          ========================================================================== */
       document.addEventListener('keydown', (e) => {
@@ -3180,7 +3310,9 @@
             break;
           case 'f':
           case 'F':
-            art.fullscreen = !art.fullscreen;
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFullscreen();
             break;
           case 'a':
           case 'A':
