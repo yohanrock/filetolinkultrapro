@@ -104,7 +104,7 @@
     .art-progress .art-control-progress-played {
       background: var(--accent) !important;
     }
-    /* All Control Icons and Time in Mint Green #10D68A (HDStream4u Style) */
+    /* All Control Icons and Time in Mint Green #10D68A */
     .art-video-player .art-bottom .art-controls .art-control,
     .art-video-player .art-bottom .art-controls .art-control svg,
     .art-video-player .art-bottom .art-controls .art-control .gd-ico svg,
@@ -116,30 +116,102 @@
       fill: var(--accent) !important;
     }
 
-    /* Vertical Volume Slider Popover (Matches HDStream4u / JWPlayer Screenshot) */
-    .art-control-volume {
-      position: relative !important;
+    /* Control Bar Spacing & Layout */
+    .art-video-player .art-bottom {
+      padding: 0 10px 8px 10px !important;
+    }
+    .art-video-player .art-bottom .art-controls {
       display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      width: 100% !important;
+      height: 44px !important;
+      position: relative !important;
+    }
+    .art-controls-left {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      flex-shrink: 0 !important;
+    }
+    .art-controls-right {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+      gap: 6px !important;
+      flex-shrink: 0 !important;
+    }
+    .art-control-playAndPause { order: 10 !important; }
+    .art-control-gd-rewind10 { order: 12 !important; }
+    .art-control-gd-forward10 { order: 14 !important; }
+    .art-control-volume { order: 20 !important; }
+    .art-control-time { order: 30 !important; }
+
+    .art-control-gd-audio { order: 10 !important; }
+    .art-control-gd-speed { order: 20 !important; }
+    .art-control-aspect-ratio { order: 30 !important; }
+    .art-control-gd-rotate { order: 40 !important; }
+    .art-control-fullscreen { order: 99 !important; }
+
+    /* Desktop Controls & Icon Sizing */
+    .art-controls .art-control {
+      padding: 0 4px !important;
+      height: 38px !important;
+      min-width: 32px !important;
+      display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
       cursor: pointer !important;
+      flex-shrink: 0 !important;
+    }
+    .art-controls .art-control svg {
+      width: 21px !important;
+      height: 21px !important;
+    }
+    .art-controls .art-control .gd-ico svg {
+      width: 20px !important;
+      height: 20px !important;
+    }
+    .art-control-time {
+      font: 500 13px/1 var(--mono, monospace) !important;
+      color: var(--accent) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 3px !important;
       padding: 0 6px !important;
+      user-select: none !important;
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
     }
 
-    /* Hide Artplayer default horizontal slider */
+    /* ==========================================================================
+       VOLUME CONTROL: DUAL MODE (HORIZONTAL ON ANDROID / VERTICAL ON DESKTOP)
+       ========================================================================== */
+    .art-control-volume {
+      position: relative !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      padding: 0 4px !important;
+      gap: 5px !important;
+      flex-shrink: 0 !important;
+    }
+
+    /* Hide Artplayer internal horizontal slider */
     .art-video-player .art-bottom .art-controls .art-control-volume .art-volume-slider,
     .art-video-player.art-is-mobile .art-bottom .art-controls .art-control-volume .art-volume-slider,
     .art-control-volume .art-volume-slider {
       display: none !important;
     }
 
-    /* Green Underline Under Speaker Icon (as in user screenshot) */
+    /* Green Underline Under Speaker Icon (Desktop Mode) */
     .gd-vol-underline {
       position: absolute;
-      bottom: 1px;
+      bottom: 2px;
       left: 50%;
       transform: translateX(-50%);
-      width: 20px;
+      width: 18px;
       height: 2.5px;
       background: var(--accent);
       border-radius: 2px;
@@ -153,13 +225,13 @@
       opacity: 1;
     }
 
-    /* Vertical Volume Popover Container (100% Functional on Android Touch & Desktop) */
+    /* Desktop Vertical Volume Popover */
     .gd-volume-popover {
       position: absolute;
       bottom: calc(100% + 12px);
       left: 50%;
       transform: translateX(-50%);
-      width: 44px;
+      width: 40px;
       height: 120px;
       display: flex;
       align-items: center;
@@ -173,7 +245,6 @@
       z-index: 120;
       touch-action: none;
     }
-
     .art-control-volume.is-open .gd-volume-popover,
     .art-control-volume:hover .gd-volume-popover,
     .gd-volume-popover.is-dragging {
@@ -182,8 +253,6 @@
       pointer-events: auto;
       transform: translateX(-50%) translateY(0);
     }
-
-    /* Vertical Track */
     .gd-vol-track {
       width: 3.5px;
       height: 86px;
@@ -193,18 +262,14 @@
       cursor: pointer;
       touch-action: none;
     }
-
-    /* Expanded Touch Area for Easy Sliding on Android */
     .gd-vol-track::before {
       content: '';
       position: absolute;
       top: -14px;
       bottom: -14px;
-      left: -20px;
-      right: -20px;
+      left: -18px;
+      right: -18px;
     }
-
-    /* Mint Green Fill Bar from Bottom */
     .gd-vol-fill {
       position: absolute;
       bottom: 0;
@@ -215,58 +280,235 @@
       border-radius: 999px;
       pointer-events: none;
     }
-
-    /* Circular Mint Green Thumb Knob */
     .gd-vol-thumb {
       position: absolute;
       top: 0;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       background: var(--accent);
       border-radius: 50%;
       box-shadow: 0 0 6px rgba(16, 214, 138, 0.6);
       pointer-events: none;
     }
 
-    /* Strict Flexbox Order matching reference screenshot layout */
-    .art-controls-left {
-      display: flex !important;
-      align-items: center !important;
+    /* Mobile Horizontal Slider (Beside Volume Icon) */
+    .gd-vol-slider-mobile {
+      display: none;
+      align-items: center;
+      width: 52px;
+      height: 24px;
+      cursor: pointer;
+      touch-action: none;
+      user-select: none;
+      position: relative;
+      flex-shrink: 0;
     }
-    .art-control-playAndPause { order: 10 !important; }
-    .art-control-gd-rewind10 { order: 12 !important; }
-    .art-control-gd-forward10 { order: 14 !important; }
-    .art-control-volume { order: 20 !important; }
-    .art-control-time { order: 30 !important; }
-
-    .art-controls-right {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: flex-end !important;
+    .gd-vol-htrack {
+      width: 100%;
+      height: 3.5px;
+      background: rgba(255, 255, 255, 0.28);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      touch-action: none;
     }
-    .art-control-gd-audio { order: 10 !important; }
-    .art-control-gd-speed { order: 20 !important; }
-    .art-control-aspect-ratio { order: 30 !important; }
-    .art-control-gd-rotate { order: 40 !important; }
-    .art-control-fullscreen { order: 99 !important; }
+    .gd-vol-htrack::before {
+      content: '';
+      position: absolute;
+      top: -12px;
+      bottom: -12px;
+      left: -6px;
+      right: -6px;
+    }
+    .gd-vol-hfill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      pointer-events: none;
+    }
+    .gd-vol-hthumb {
+      position: absolute;
+      top: 50%;
+      right: -5px;
+      transform: translateY(-50%);
+      width: 11px;
+      height: 11px;
+      background: #ffffff;
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+    }
 
-    .art-control-time {
-      font: 500 13px/1 var(--mono, monospace) !important;
-      color: var(--accent) !important;
+    /* Switch: Horizontal on Mobile / Vertical on Desktop */
+    @media (min-width: 769px) {
+      .gd-vol-slider-mobile {
+        display: none !important;
+      }
+      .gd-vol-underline {
+        display: block !important;
+      }
+    }
+    @media (max-width: 768px), (hover: none) {
+      .gd-vol-slider-mobile {
+        display: flex !important;
+      }
+      .gd-volume-popover {
+        display: none !important;
+      }
+      .gd-vol-underline {
+        display: none !important;
+      }
+    }
+    .art-video-player.gd-touch .gd-vol-slider-mobile,
+    .art-video-player.gd-narrow .gd-vol-slider-mobile {
       display: flex !important;
-      align-items: center !important;
+    }
+    .art-video-player.gd-touch .gd-volume-popover,
+    .art-video-player.gd-narrow .gd-volume-popover,
+    .art-video-player.gd-touch .gd-vol-underline,
+    .art-video-player.gd-narrow .gd-vol-underline {
+      display: none !important;
+    }
+
+    /* ==========================================================================
+       ANDROID & MOBILE FIT SUPPORT: Auto converts based on screen size
+       Decreases icons & spacing so controls NEVER crowd or collide in the middle!
+       ========================================================================== */
+    @media (max-width: 768px), (hover: none) {
+      .art-video-player .art-bottom {
+        padding: 0 6px 4px 6px !important;
+      }
+      .art-video-player .art-bottom .art-controls {
+        height: 38px !important;
+      }
+      .art-controls-left {
+        gap: 3px !important;
+      }
+      .art-controls-right {
+        gap: 3px !important;
+      }
+      .art-controls .art-control {
+        padding: 0 2px !important;
+        height: 32px !important;
+        min-width: 26px !important;
+      }
+      .art-controls .art-control svg {
+        width: 18px !important;
+        height: 18px !important;
+      }
+      .art-controls .art-control .gd-ico svg {
+        width: 17px !important;
+        height: 17px !important;
+      }
+      .art-control-time {
+        font: 500 11px/1 var(--mono, monospace) !important;
+        padding: 0 3px !important;
+        gap: 2px !important;
+      }
+      .gd-speed-pill {
+        font-size: 11px !important;
+        padding: 2px 5px !important;
+      }
+      .gd-vol-slider-mobile {
+        width: 48px !important;
+      }
+    }
+
+    /* Extra Narrow Android Screens (< 480px Portrait Phone):
+       Further compact icons so there is ALWAYS healthy space in the middle! */
+    @media (max-width: 480px) {
+      .art-video-player .art-bottom {
+        padding: 0 4px 3px 4px !important;
+      }
+      .art-video-player .art-bottom .art-controls {
+        height: 34px !important;
+      }
+      .art-controls-left {
+        gap: 2px !important;
+      }
+      .art-controls-right {
+        gap: 2px !important;
+      }
+      .art-controls .art-control {
+        padding: 0 1px !important;
+        height: 28px !important;
+        min-width: 24px !important;
+      }
+      .art-controls .art-control svg {
+        width: 16px !important;
+        height: 16px !important;
+      }
+      .art-controls .art-control .gd-ico svg {
+        width: 15px !important;
+        height: 15px !important;
+      }
+      .art-control-time {
+        font: 500 10px/1 var(--mono, monospace) !important;
+        padding: 0 2px !important;
+        gap: 1.5px !important;
+      }
+      .gd-speed-pill {
+        font-size: 10px !important;
+        padding: 1px 4px !important;
+      }
+      .gd-vol-slider-mobile {
+        width: 40px !important;
+      }
+      .gd-vol-hthumb {
+        width: 9px !important;
+        height: 9px !important;
+        right: -4px !important;
+      }
+    }
+
+    /* Container query / class-based scaling as well */
+    .art-video-player.gd-narrow .art-controls-left,
+    .art-video-player.gd-narrow .art-controls-right {
       gap: 3px !important;
-      padding: 0 6px !important;
-      user-select: none !important;
-      white-space: nowrap !important;
+    }
+    .art-video-player.gd-narrow .art-controls .art-control {
+      padding: 0 2px !important;
+      min-width: 26px !important;
+      height: 32px !important;
+    }
+    .art-video-player.gd-narrow .art-controls .art-control svg {
+      width: 18px !important;
+      height: 18px !important;
+    }
+    .art-video-player.gd-narrow .art-control-time {
+      font-size: 11px !important;
+      padding: 0 3px !important;
+    }
+    .art-video-player.gd-narrow .gd-vol-slider-mobile {
+      width: 46px !important;
     }
 
-    .art-video-player.gd-narrow {
-      --art-control-height: 36px;
-      --art-padding: 6px;
-      --art-control-icon-size: 28px;
+    .art-video-player.gd-tiny .art-controls-left,
+    .art-video-player.gd-tiny .art-controls-right {
+      gap: 2px !important;
+    }
+    .art-video-player.gd-tiny .art-controls .art-control {
+      padding: 0 1px !important;
+      min-width: 24px !important;
+      height: 28px !important;
+    }
+    .art-video-player.gd-tiny .art-controls .art-control svg {
+      width: 16px !important;
+      height: 16px !important;
+    }
+    .art-video-player.gd-tiny .art-control-time {
+      font-size: 10px !important;
+      padding: 0 2px !important;
+    }
+    .art-video-player.gd-tiny .gd-vol-slider-mobile {
+      width: 38px !important;
     }
 
     /* Play Speed Pill */
@@ -2110,12 +2352,12 @@
         }, 1300);
       }
 
-      // Vertical Volume Slider Support (Touch, Pointer, Drag for Android, TV & Desktop)
+      // Dual Volume Slider Support: Horizontal beside icon on Android / Vertical on Desktop
       function initVolumeSlider() {
         const volCtrl = playerEl.querySelector('.art-control-volume');
         if (!volCtrl) return;
 
-        // Ensure vertical popover exists
+        // 1. Desktop Vertical Popover
         let popover = volCtrl.querySelector('.gd-volume-popover');
         if (!popover) {
           popover = document.createElement('div');
@@ -2130,7 +2372,7 @@
           volCtrl.appendChild(popover);
         }
 
-        // Ensure green underline indicator exists under speaker icon
+        // 2. Desktop Underline Indicator
         let underline = volCtrl.querySelector('.gd-vol-underline');
         if (!underline) {
           underline = document.createElement('div');
@@ -2138,102 +2380,144 @@
           volCtrl.appendChild(underline);
         }
 
-        const track = popover.querySelector('.gd-vol-track');
-        const fill = popover.querySelector('.gd-vol-fill');
+        // 3. Mobile Horizontal Slider (beside volume icon)
+        let mobileSlider = volCtrl.querySelector('.gd-vol-slider-mobile');
+        if (!mobileSlider) {
+          mobileSlider = document.createElement('div');
+          mobileSlider.className = 'gd-vol-slider-mobile';
+          mobileSlider.innerHTML = `
+            <div class="gd-vol-htrack">
+              <div class="gd-vol-hfill">
+                <div class="gd-vol-hthumb"></div>
+              </div>
+            </div>
+          `;
+          volCtrl.appendChild(mobileSlider);
+        }
 
+        const vtrack = popover.querySelector('.gd-vol-track');
+        const vfill = popover.querySelector('.gd-vol-fill');
+        const htrack = mobileSlider.querySelector('.gd-vol-htrack');
+        const hfill = mobileSlider.querySelector('.gd-vol-hfill');
+
+        // Sync both vertical and horizontal sliders with current video volume
+        function syncSliders() {
+          const v = video.muted ? 0 : (typeof video.volume === 'number' ? video.volume : 1);
+          const pct = Math.round(v * 100);
+          if (vfill) vfill.style.height = pct + '%';
+          if (hfill) hfill.style.width = pct + '%';
+          volCtrl.classList.toggle('is-muted', video.muted || v === 0);
+          volCtrl.classList.toggle('is-active', !video.muted && v > 0);
+        }
+
+        // ---- Desktop Vertical Drag Handler ----
+        let isVDragging = false;
         let hideTimer = null;
         function openPopover() {
           clearTimeout(hideTimer);
           volCtrl.classList.add('is-open', 'is-active');
         }
-
         function scheduleClose() {
           clearTimeout(hideTimer);
           hideTimer = setTimeout(() => {
-            if (!isDragging) {
-              volCtrl.classList.remove('is-open');
-            }
-          }, 2800);
+            if (!isVDragging) volCtrl.classList.remove('is-open');
+          }, 2500);
         }
 
         function setVolumeFromY(clientY) {
-          const rect = track.getBoundingClientRect();
+          const rect = vtrack.getBoundingClientRect();
           if (!rect.height) return;
           const diff = rect.bottom - clientY;
           const ratio = Math.max(0, Math.min(1, diff / rect.height));
           video.volume = ratio;
           video.muted = (ratio === 0);
           try { art.volume = ratio; } catch {}
-          syncSlider();
+          syncSliders();
           showVolumeHud(ratio, video.muted);
         }
 
-        function syncSlider() {
-          const v = video.muted ? 0 : (typeof video.volume === 'number' ? video.volume : 1);
-          if (fill) fill.style.height = (v * 100) + '%';
-          volCtrl.classList.toggle('is-muted', video.muted || v === 0);
-          volCtrl.classList.toggle('is-active', !video.muted && v > 0);
-        }
-
-        let isDragging = false;
-        function onPointerDown(e) {
+        popover.addEventListener('pointerdown', (e) => {
           e.stopPropagation();
           e.preventDefault();
-          isDragging = true;
+          isVDragging = true;
           popover.classList.add('is-dragging');
           volCtrl.classList.add('is-open');
           try { popover.setPointerCapture(e.pointerId); } catch {}
           setVolumeFromY(e.clientY);
-        }
-
-        function onPointerMove(e) {
-          if (isDragging) {
+        });
+        popover.addEventListener('pointermove', (e) => {
+          if (isVDragging) {
             e.stopPropagation();
             e.preventDefault();
             setVolumeFromY(e.clientY);
           }
-        }
-
-        function onPointerUp(e) {
-          if (isDragging) {
-            isDragging = false;
+        });
+        const stopVDrag = (e) => {
+          if (isVDragging) {
+            isVDragging = false;
             popover.classList.remove('is-dragging');
             try { popover.releasePointerCapture(e.pointerId); } catch {}
             scheduleClose();
           }
+        };
+        popover.addEventListener('pointerup', stopVDrag);
+        popover.addEventListener('pointercancel', stopVDrag);
+
+        // ---- Mobile Horizontal Touch/Drag Handler ----
+        let isHDragging = false;
+        function setVolumeFromX(clientX) {
+          const rect = htrack.getBoundingClientRect();
+          if (!rect.width) return;
+          const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+          video.volume = ratio;
+          video.muted = (ratio === 0);
+          try { art.volume = ratio; } catch {}
+          syncSliders();
+          showVolumeHud(ratio, video.muted);
         }
 
-        popover.addEventListener('pointerdown', onPointerDown);
-        popover.addEventListener('pointermove', onPointerMove);
-        popover.addEventListener('pointerup', onPointerUp);
-        popover.addEventListener('pointercancel', onPointerUp);
+        mobileSlider.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          isHDragging = true;
+          try { mobileSlider.setPointerCapture(e.pointerId); } catch {}
+          setVolumeFromX(e.clientX);
+        });
+        mobileSlider.addEventListener('pointermove', (e) => {
+          if (isHDragging) {
+            e.stopPropagation();
+            e.preventDefault();
+            setVolumeFromX(e.clientX);
+          }
+        });
+        const stopHDrag = (e) => {
+          if (isHDragging) {
+            isHDragging = false;
+            try { mobileSlider.releasePointerCapture(e.pointerId); } catch {}
+          }
+        };
+        mobileSlider.addEventListener('pointerup', stopHDrag);
+        mobileSlider.addEventListener('pointercancel', stopHDrag);
 
-        // Tap/click handler on Speaker Icon
+        // Tap/click handler on Speaker Icon: toggles mute/unmute
         volCtrl.addEventListener('click', (e) => {
-          if (e.target.closest('.gd-volume-popover')) return;
+          if (e.target.closest('.gd-volume-popover, .gd-vol-slider-mobile')) return;
           e.preventDefault();
           e.stopPropagation();
 
-          if (!volCtrl.classList.contains('is-open')) {
-            openPopover();
-            scheduleClose();
-          } else {
-            // Toggle mute/unmute
-            video.muted = !video.muted;
-            try { art.muted = video.muted; } catch {}
-            syncSlider();
-            showVolumeHud(video.volume, video.muted);
-            scheduleClose();
-          }
+          video.muted = !video.muted;
+          try { art.muted = video.muted; } catch {}
+          syncSliders();
+          showVolumeHud(video.volume, video.muted);
         });
 
         // Desktop hover
         volCtrl.addEventListener('mouseenter', openPopover);
         volCtrl.addEventListener('mouseleave', () => {
-          if (!isDragging) scheduleClose();
+          if (!isVDragging) scheduleClose();
         });
 
-        // Mouse wheel adjustment
+        // Mouse wheel adjustment on desktop
         volCtrl.addEventListener('wheel', (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -2241,22 +2525,22 @@
           const newVol = Math.max(0, Math.min(1, (video.volume || 0) + step));
           video.volume = newVol;
           video.muted = (newVol === 0);
-          syncSlider();
+          syncSliders();
           openPopover();
           scheduleClose();
           showVolumeHud(newVol, video.muted);
         }, { passive: false });
 
-        // Close on tap outside
+        // Close desktop vertical popover on tap outside
         document.addEventListener('pointerdown', (e) => {
           if (!volCtrl.contains(e.target)) {
             volCtrl.classList.remove('is-open');
           }
         });
 
-        video.addEventListener('volumechange', syncSlider);
-        art.on('video:volumechange', syncSlider);
-        syncSlider();
+        video.addEventListener('volumechange', syncSliders);
+        art.on('video:volumechange', syncSliders);
+        syncSliders();
       }
       setTimeout(initVolumeSlider, 60);
 
@@ -2290,12 +2574,13 @@
       art.on('video:timeupdate', updatePlayTimeDisplay);
       art.on('seek', updatePlayTimeDisplay);
 
-      // Responsive Control Bar
-      if (IS_TOUCH) playerEl.classList.add('gd-touch');
+      // Responsive Control Bar & Android Mobile Fit
+      const IS_MOBILE_DEVICE = IS_TOUCH || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      if (IS_MOBILE_DEVICE) playerEl.classList.add('gd-touch', 'gd-mobile');
       const fitControls = () => {
         const w = playerEl.clientWidth;
-        playerEl.classList.toggle('gd-narrow', w < 560);
-        playerEl.classList.toggle('gd-tiny', w < 420);
+        playerEl.classList.toggle('gd-narrow', w < 768);
+        playerEl.classList.toggle('gd-tiny', w < 480);
       };
       const fitObserver = new ResizeObserver(() => {
         fitControls();
