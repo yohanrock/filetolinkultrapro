@@ -23,8 +23,8 @@ PORT = 8080
 TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "template", "webav.html")
 
 # Sample test video with multi-audio & subtitles support
-DEFAULT_VIDEO = "https://pro-rockstar.mummy16.workers.dev/1519?hash=AgADVh"
-DEFAULT_NAME = "@Infinity_Movies2 www.5MovieRulz.company - Naa Wife Miss.mkv"
+DEFAULT_VIDEO = "https://pro-rockstar.mummy16.workers.dev/1527?hash=AgADOC"
+DEFAULT_NAME = "@Infinity_Movies2 Baththa.2026.720p.NF.WEB-DL.Telugu.AAC.mkv"
 SAMPLE_MKV = "https://ia800201.us.archive.org/12/items/BigBuckBunny_328/BigBuckBunny_512kb.mp4"
 
 class TestPlayerHandler(BaseHTTPRequestHandler):
